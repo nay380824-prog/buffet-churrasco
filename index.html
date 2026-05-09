@@ -877,16 +877,16 @@ header {
 /* ----------------------------------------------------------------
    ⚙️  CONFIGURAÇÃO — edite apenas estas 3 linhas
    ---------------------------------------------------------------- */
-const SUPABASE_URL  = 'YOUR_SUPABASE_URL';   // ex: https://abc123.supabase.co
-const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY';
-const PIN           = '1234';                // altere o PIN de acesso aqui
+const SUPABASE_URL  = 'https://xgpcefqkiffzghydjben.supabase.co';   // ex: https://abc123.supabase.co
+const SUPABASE_KEY  = 'sb_publishable_6SdFZoMdQWeZ_OUae_UMCA_1nYM0Npd';
+const PIN           = '9215';                // altere o PIN de acesso aqui
 /* ---------------------------------------------------------------- */
 
 /* Supabase — inicialização segura */
 let db = null;
 
 function initSupabase() {
-  if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+  if (SUPABASE_URL === 'https://xgpcefqkiffzghydjben.supabase.co' || SUPABASE_KEY === 'sb_publishable_6SdFZoMdQWeZ_OUae_UMCA_1nYM0Npd') {
     return false; // Credenciais ainda não configuradas
   }
   try {
