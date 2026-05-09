@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Churrasco em Brasília – Gestão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ============================================================
+   RESET & TOKENS
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg:        #0f0a07;
+  --surface:   #1c1209;
+  --card:      #261a0e;
+  --card-hi:   #30200f;
+  --border:    rgba(255,200,100,0.1);
+  --primary:   #e8722a;
+  --primary-d: #c05a1a;
+  --amber:     #f59540;
+  --mayron:    #f59540;
+  --saymon:    #e04848;
+  --text:      #f5efe8;
+  --muted:     #9c8870;
+  --muted2:    #6b5a45;
+  --success:   #4caf6e;
+  --danger:    #e04848;
+  --warning:   #f5c342;
+  --radius:    14px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.4);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 110%, rgba(232,114,42,0.25) 0%, transparent 70%),
+    var(--bg);
+}
+
+.login-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 0 20px rgba(232,114,42,0.6));
+}
+
+.login-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 0.35rem;
+}
+
+.login-sub {
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 3rem;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--muted2);
+  background: transparent;
+  transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+
+.pin-dot.on {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.2);
+  box-shadow: 0 0 12px rgba(232,114,42,0.7);
+}
+
+.pin-dot.shake {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 1rem;
+}
+
+.key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.key:hover  { background: var(--card); border-color: var(--primary); }
+.key:active { background: var(--primary); transform: scale(0.93); border-color: var(--primary); }
+.key.ghost  { background: transparent; border-color: transparent; pointer-events: none; }
+.key.del    { font-size: 1.1rem; }
+
+.login-err {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--danger);
+  min-height: 1.2em;
+  text-align: center;
+}
+
+/* ============================================================
+   MAIN APP
+   ============================================================ */
+#mainApp { display: none; }
+
+/* ---- HEADER ---- */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.header-brand span.flame { font-size: 1.3rem; }
+
+.header-brand h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.btn-exit {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+
+.btn-exit:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ---- CALENDAR ---- */
+.cal-wrap {
+  background: var(--surface);
+  padding: 1.25rem;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.cal-nav button {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.15s;
+}
+
+.cal-nav button:hover { background: var(--card-hi); border-color: var(--primary); color: var(--primary); }
+
+.cal-month {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 0.5rem;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  position: relative;
+  transition: all 0.15s;
+  color: var(--text);
+  gap: 2px;
+}
+
+.cal-day:hover:not(.empty) { background: var(--card); }
+.cal-day.empty             { cursor: default; color: transparent; }
+.cal-day.other-m           { color: var(--muted2); }
+.cal-day.today             { color: var(--primary); font-weight: 700; }
+.cal-day.selected          { background: var(--primary) !important; color: white !important; font-weight: 700; }
+.cal-day.selected .dot     { background: white !important; }
+
+.dots-row {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+  height: 6px;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.m { background: var(--mayron); }
+.dot.s { background: var(--saymon); }
+
+/* ---- LEGEND ---- */
+.legend {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 0.75rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.legend-item { display: flex; align-items: center; gap: 0.5rem; }
+
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ---- EVENT LIST ---- */
+.events-section {
+  padding: 1.25rem;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.event-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid;
+  transition: all 0.2s;
+}
+
+.event-card:hover { background: var(--card-hi); transform: translateX(2px); }
+.event-card.m     { border-left-color: var(--mayron); }
+.event-card.s     { border-left-color: var(--saymon); }
+
+.event-date-col {
+  text-align: center;
+  min-width: 38px;
+}
+
+.event-date-col .ev-d { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.event-date-col .ev-m { font-size: 0.65rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.05em; }
+
+.event-info { flex: 1; min-width: 0; }
+.event-name { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+
+.badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.badge.m { background: rgba(245,149,64,0.15); color: var(--mayron); }
+.badge.s { background: rgba(224,72,72,0.15); color: var(--saymon); }
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+}
+
+.empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; filter: grayscale(0.5); }
+.empty-text { font-size: 0.9rem; }
+
+/* ---- FAB ---- */
+.fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(232,114,42,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+}
+
+.fab:hover  { transform: scale(1.08); background: var(--amber); }
+.fab:active { transform: scale(0.94); }
+
+/* ============================================================
+   MODALS (bottom sheet)
+   ============================================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+.overlay.open { display: flex; }
+
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  animation: slideUp 0.3s cubic-bezier(.16,1,.3,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.handle {
+  width: 36px;
+  height: 4px;
+  background: var(--muted2);
+  border-radius: 2px;
+  margin: 0 auto 1.5rem;
+}
+
+.sheet-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+.form-sec         { margin-bottom: 1.5rem; }
+.form-sec-label   { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 0.75rem; }
+.form-group       { margin-bottom: 0.9rem; }
+.form-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--muted); }
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.93rem;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--card);
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+.form-group select option { background: var(--card); }
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Churrasqueiro toggle */
+.churrasco-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.ct-btn {
+  padding: 0.85rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  cursor: pointer;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.2s;
+}
+
+.ct-btn:hover { border-color: var(--muted2); color: var(--text); }
+.ct-btn.sel.m { border-color: var(--mayron); background: rgba(245,149,64,0.1); color: var(--mayron); }
+.ct-btn.sel.s { border-color: var(--saymon); background: rgba(224,72,72,0.1); color: var(--saymon); }
+
+.ct-name { font-size: 0.95rem; }
+.ct-role { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; opacity: 0.7; }
+
+/* Alert */
+.alert {
+  display: none;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  margin-bottom: 0.9rem;
+  align-items: flex-start;
+  gap: 0.6rem;
+  line-height: 1.5;
+}
+
+.alert.show { display: flex; }
+.alert.w { background: rgba(245,195,66,0.12); border: 1px solid rgba(245,195,66,0.3); color: var(--warning); }
+.alert.d { background: rgba(224,72,72,0.12); border: 1px solid rgba(224,72,72,0.3); color: var(--danger); }
+.alert.ok { background: rgba(76,175,110,0.12); border: 1px solid rgba(76,175,110,0.3); color: var(--success); }
+
+/* Extenso preview */
+.extenso {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-style: italic;
+  margin-top: 0.3rem;
+  min-height: 1.1em;
+}
+
+/* Buttons */
+.btn-prim {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.btn-prim:hover    { background: var(--amber); }
+.btn-prim:active   { transform: scale(0.98); }
+.btn-prim:disabled { background: var(--muted2); cursor: not-allowed; }
+
+.btn-sec {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.97rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.btn-sec:hover { border-color: var(--muted2); color: var(--text); }
+
+.btn-del {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  background: transparent;
+  color: var(--danger);
+  border: 1.5px solid rgba(224,72,72,0.3);
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.97rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.btn-del:hover { background: rgba(224,72,72,0.1); border-color: var(--danger); }
+
+/* ============================================================
+   DETAIL MODAL
+   ============================================================ */
+.det-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.det-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.2rem; }
+.det-date { font-size: 0.82rem; color: var(--muted); }
+.det-val  { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+
+.det-row {
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.det-row:last-of-type { border-bottom: none; }
+.det-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.det-value { font-size: 0.92rem; }
+
+/* ============================================================
+   SPINNER & TOAST
+   ============================================================ */
+.spin {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 0.4rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed;
+  bottom: 5.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--card-hi);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.65rem 1.25rem;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
+   SCROLLBAR (webkit)
+   ============================================================ */
+.sheet::-webkit-scrollbar { width: 4px; }
+.sheet::-webkit-scrollbar-track { background: transparent; }
+.sheet::-webkit-scrollbar-thumb { background: var(--muted2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN
+     ============================================================ -->
+<div id="loginScreen">
+  <div class="login-icon">🔥</div>
+  <div class="login-title">Churrasco em Brasília</div>
+  <div class="login-sub">Gestão de Eventos</div>
+
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+
+  <div class="keypad">
+    <button class="key" onclick="kp('1')">1</button>
+    <button class="key" onclick="kp('2')">2</button>
+    <button class="key" onclick="kp('3')">3</button>
+    <button class="key" onclick="kp('4')">4</button>
+    <button class="key" onclick="kp('5')">5</button>
+    <button class="key" onclick="kp('6')">6</button>
+    <button class="key" onclick="kp('7')">7</button>
+    <button class="key" onclick="kp('8')">8</button>
+    <button class="key" onclick="kp('9')">9</button>
+    <button class="key ghost"></button>
+    <button class="key" onclick="kp('0')">0</button>
+    <button class="key del" onclick="kd()">⌫</button>
+  </div>
+
+  <div class="login-err" id="loginErr"></div>
+</div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="mainApp">
+  <!-- Header -->
+  <header>
+    <div class="header-brand">
+      <span class="flame">🔥</span>
+      <h1>Churrasco em Brasília</h1>
+    </div>
+    <button class="btn-exit" onclick="sair()">Sair</button>
+  </header>
+
+  <!-- Calendário -->
+  <div class="cal-wrap">
+    <div class="cal-nav">
+      <button onclick="navMes(-1)">‹</button>
+      <span class="cal-month" id="calTitle"></span>
+      <button onclick="navMes(1)">›</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>Dom</span><span>Seg</span><span>Ter</span>
+      <span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- Legenda -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="leg-dot" style="background:var(--mayron)"></div>
+      Mayron
+    </div>
+    <div class="legend-item">
+      <div class="leg-dot" style="background:var(--saymon)"></div>
+      Saymon
+    </div>
+  </div>
+
+  <!-- Lista de eventos -->
+  <div class="events-section">
+    <div class="section-label" id="listLabel">Próximos Eventos</div>
+    <div id="eventList"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" onclick="abrirForm()" title="Novo Evento">＋</button>
+</div>
+
+<!-- ============================================================
+     MODAL: NOVO EVENTO
+     ============================================================ -->
+<div class="overlay" id="ovForm">
+  <div class="sheet" id="shForm">
+    <div class="handle"></div>
+    <div class="sheet-title">Novo Evento</div>
+
+    <!-- Churrasqueiro -->
+    <div class="form-sec">
+      <div class="form-sec-label">Churrasqueiro</div>
+      <div class="churrasco-toggle">
+        <div class="ct-btn" id="ctMayron" onclick="selCt('Mayron')">
+          <div class="ct-name">🥩 Mayron</div>
+          <div class="ct-role">Nataniel da Rosa</div>
+        </div>
+        <div class="ct-btn" id="ctSaymon" onclick="selCt('Saymon')">
+          <div class="ct-name">🔥 Saymon</div>
+          <div class="ct-role">Luciano da Rosa</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data e Horário -->
+    <div class="form-sec">
+      <div class="form-sec-label">Data e Horário</div>
+      <div class="form-group">
+        <label>Data do Evento</label>
+        <input type="date" id="fData" onchange="checkDisp()">
+      </div>
+      <div id="alertDisp" class="alert"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Início</label>
+          <input type="time" id="fInicio">
+        </div>
+        <div class="form-group">
+          <label>Término</label>
+          <input type="time" id="fFim">
+        </div>
+      </div>
+    </div>
+
+    <!-- Contratante -->
+    <div class="form-sec">
+      <div class="form-sec-label">Dados do Contratante</div>
+      <div class="form-group">
+        <label>Nome Completo</label>
+        <input type="text" id="fNome" placeholder="Nome do cliente" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="fCPF" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" inputmode="numeric">
+      </div>
+      <div class="form-group">
+        <label>Endereço de Residência</label>
+        <input type="text" id="fEnd" placeholder="Cidade, bairro, rua...">
+      </div>
+    </div>
+
+    <!-- Evento -->
+    <div class="form-sec">
+      <div class="form-sec-label">Dados do Evento</div>
+      <div class="form-group">
+        <label>Endereço do Local</label>
+        <input type="text" id="fEndEv" placeholder="Local onde será o churrasco">
+      </div>
+      <div class="form-group">
+        <label>Modalidade</label>
+        <select id="fModal">
+          <option value="">Selecione...</option>
+          <option value="Churrasco em domicílio (sem bebidas)">Sem bebidas</option>
+          <option value="Churrasco em domicílio (com bebidas não alcoólicas)">Com bebidas não alcoólicas</option>
+          <option value="Churrasco em domicílio (com bebidas alcoólicas)">Com bebidas alcoólicas</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nº de Convidados</label>
+          <input type="number" id="fQtd" min="1" placeholder="0" inputmode="numeric" oninput="updExtQtd()">
+          <div class="extenso" id="extQtd"></div>
+        </div>
+        <div class="form-group">
+          <label>Valor Total (R$)</label>
+          <input type="number" id="fValor" min="0" step="0.01" placeholder="0,00" inputmode="decimal" oninput="updExtVal()">
+          <div class="extenso" id="extVal"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assinatura -->
+    <div class="form-sec">
+      <div class="form-sec-label">Contrato</div>
+      <div class="form-group">
+        <label>Data de Assinatura</label>
+        <input type="date" id="fDataContrato">
+      </div>
+    </div>
+
+    <button class="btn-prim" id="btnSalvar" onclick="salvar()">💾 Salvar e Gerar Contrato</button>
+    <button class="btn-sec" onclick="fechar('ovForm')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETALHE
+     ============================================================ -->
+<div class="overlay" id="ovDet">
+  <div class="sheet" id="shDet">
+    <div class="handle"></div>
+    <div id="detContent"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ----------------------------------------------------------------
+   ⚙️  CONFIGURAÇÃO — edite apenas estas 3 linhas
+   ---------------------------------------------------------------- */
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL';   // ex: https://abc123.supabase.co
+const SUPABASE_KEY  = 'YOUR_SUPABASE_ANON_KEY';
+const PIN           = '1234';                // altere o PIN de acesso aqui
+/* ---------------------------------------------------------------- */
+
+/* Supabase — inicialização segura */
+let db = null;
+
+function initSupabase() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+    return false; // Credenciais ainda não configuradas
+  }
+  try {
+    const { createClient } = supabase;
+    db = createClient(SUPABASE_URL, SUPABASE_KEY);
+    return true;
+  } catch (e) {
+    console.error('Erro ao conectar ao Supabase:', e);
+    return false;
+  }
+}
+
+/* Estado global */
+let eventos       = [];
+let anoAtual      = new Date().getFullYear();
+let mesAtual      = new Date().getMonth();
+let diaSel        = null;
+let ctSel         = null;   // churrasqueiro selecionado no form
+let pinBuf        = '';
+let detalheAtual  = null;
+
+/* ================================================================
+   LOGIN / PIN
+   ================================================================ */
+function kp(c) {
+  if (pinBuf.length >= 4) return;
+  pinBuf += c;
+  updDots();
+  if (pinBuf.length === 4) {
+    setTimeout(() => {
+      if (pinBuf === PIN) {
+        if (!initSupabase()) {
+          document.getElementById('loginErr').textContent = '⚠️ Configure SUPABASE_URL e SUPABASE_KEY no arquivo HTML antes de usar.';
+          pinBuf = '';
+          updDots();
+          return;
+        }
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display   = 'block';
+        init();
+      } else {
+        document.getElementById('loginErr').textContent = 'PIN incorreto. Tente novamente.';
+        document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('shake'));
+        setTimeout(() => {
+          pinBuf = '';
+          updDots();
+          document.querySelectorAll('.pin-dot').forEach(d => d.classList.remove('shake'));
+          document.getElementById('loginErr').textContent = '';
+        }, 700);
+      }
+    }, 120);
+  }
+}
+
+function kd() {
+  pinBuf = pinBuf.slice(0, -1);
+  updDots();
+  document.getElementById('loginErr').textContent = '';
+}
+
+function updDots() {
+  for (let i = 0; i < 4; i++)
+    document.getElementById('d' + i).classList.toggle('on', i < pinBuf.length);
+}
+
+function sair() {
+  pinBuf = '';
+  updDots();
+  document.getElementById('mainApp').style.display    = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+async function init() {
+  await carregarEventos();
+  renderCal();
+  listarProximos();
+  document.getElementById('fDataContrato').valueAsDate = new Date();
+}
+
+/* ================================================================
+   SUPABASE
+   ================================================================ */
+async function carregarEventos() {
+  const { data, error } = await db
+    .from('eventos_buffet')
+    .select('*')
+    .order('data_evento', { ascending: true });
+
+  if (error) { toast('Erro ao carregar eventos'); return; }
+  eventos = data || [];
+}
+
+async function salvar() {
+  /* Coleta */
+  const data     = document.getElementById('fData').value;
+  const inicio   = document.getElementById('fInicio').value;
+  const fim      = document.getElementById('fFim').value;
+  const nome     = document.getElementById('fNome').value.trim();
+  const cpf      = document.getElementById('fCPF').value.trim();
+  const end      = document.getElementById('fEnd').value.trim();
+  const endEv    = document.getElementById('fEndEv').value.trim();
+  const modal    = document.getElementById('fModal').value;
+  const qtd      = parseInt(document.getElementById('fQtd').value);
+  const valor    = parseFloat(document.getElementById('fValor').value);
+  const dataCt   = document.getElementById('fDataContrato').value;
+
+  /* Validações */
+  if (!ctSel)             return toast('Selecione o churrasqueiro');
+  if (!data)              return toast('Informe a data do evento');
+  if (!inicio || !fim)    return toast('Informe o horário de início e término');
+  if (!nome)              return toast('Informe o nome do contratante');
+  if (!cpf)               return toast('Informe o CPF do contratante');
+  if (!end)               return toast('Informe o endereço do contratante');
+  if (!endEv)             return toast('Informe o endereço do evento');
+  if (!modal)             return toast('Selecione a modalidade');
+  if (!qtd || qtd < 1)   return toast('Informe a quantidade de convidados');
+  if (!valor || valor<=0) return toast('Informe o valor total');
+  if (!dataCt)            return toast('Informe a data de assinatura');
+
+  /* Conflito */
+  const conflito = eventos.find(e => e.data_evento === data && e.churrasqueiro === ctSel);
+  if (conflito) return toast(`${ctSel} já tem evento nessa data!`);
+
+  /* Salvar */
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Salvando...';
+
+  const { data: saved, error } = await db
+    .from('eventos_buffet')
+    .insert([{
+      churrasqueiro:        ctSel,
+      data_evento:          data,
+      horario_inicio:       inicio,
+      horario_fim:          fim,
+      contratante_nome:     nome,
+      contratante_cpf:      cpf,
+      contratante_endereco: end,
+      endereco_evento:      endEv,
+      modalidade:           modal,
+      qtd_convidados:       qtd,
+      valor_total:          valor,
+      data_contrato:        dataCt
+    }])
+    .select()
+    .single();
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 Salvar e Gerar Contrato';
+
+  if (error) { console.error(error); return toast('Erro ao salvar'); }
+
+  eventos.push(saved);
+  renderCal();
+  fechar('ovForm');
+  toast('Evento salvo! Gerando contrato...');
+
+  diaSel = data;
+  renderCal();
+  listarDia(data);
+
+  setTimeout(() => gerarContrato(saved), 500);
+}
+
+async function excluir(id) {
+  if (!confirm('Tem certeza que deseja excluir este evento?')) return;
+
+  const { error } = await db.from('eventos_buffet').delete().eq('id', id);
+  if (error) return toast('Erro ao excluir');
+
+  eventos = eventos.filter(e => e.id !== id);
+  renderCal();
+  fechar('ovDet');
+  toast('Evento excluído');
+
+  if (diaSel) listarDia(diaSel);
+  else listarProximos();
+}
+
+/* ================================================================
+   CALENDÁRIO
+   ================================================================ */
+const MESES_LONG  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+function renderCal() {
+  document.getElementById('calTitle').textContent =
+    `${MESES_LONG[mesAtual]} ${anoAtual}`;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const hoje     = new Date();
+  const primDia  = new Date(anoAtual, mesAtual, 1).getDay();
+  const ultDia   = new Date(anoAtual, mesAtual + 1, 0).getDate();
+
+  /* Células vazias */
+  for (let i = 0; i < primDia; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  /* Dias */
+  for (let d = 1; d <= ultDia; d++) {
+    const ds = dateStr(anoAtual, mesAtual, d);
+    const evs = eventos.filter(e => e.data_evento === ds);
+    const temM = evs.some(e => e.churrasqueiro === 'Mayron');
+    const temS = evs.some(e => e.churrasqueiro === 'Saymon');
+
+    const isHoje = d === hoje.getDate() &&
+      mesAtual === hoje.getMonth() && anoAtual === hoje.getFullYear();
+
+    const el = document.createElement('div');
+    el.className = 'cal-day' +
+      (isHoje  ? ' today'    : '') +
+      (ds === diaSel ? ' selected' : '');
+    el.onclick = () => selecionarDia(ds);
+
+    el.innerHTML = `<span>${d}</span>`;
+
+    if (evs.length) {
+      const row = document.createElement('div');
+      row.className = 'dots-row';
+      if (temM) { const dot = document.createElement('div'); dot.className='dot m'; row.appendChild(dot); }
+      if (temS) { const dot = document.createElement('div'); dot.className='dot s'; row.appendChild(dot); }
+      el.appendChild(row);
+    }
+
+    grid.appendChild(el);
+  }
+}
+
+function navMes(dir) {
+  mesAtual += dir;
+  if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
+  if (mesAtual < 0)  { mesAtual = 11; anoAtual--; }
+  renderCal();
+}
+
+function selecionarDia(ds) {
+  diaSel = ds;
+  renderCal();
+  listarDia(ds);
+}
+
+/* ================================================================
+   LISTA DE EVENTOS
+   ================================================================ */
+function listarDia(ds) {
+  const [y, m, d] = ds.split('-').map(Number);
+  document.getElementById('listLabel').textContent =
+    `${d} de ${MESES_LONG[m-1].toLowerCase()} de ${y}`;
+
+  const evs = eventos.filter(e => e.data_evento === ds);
+  renderLista(evs, false);
+}
+
+function listarProximos() {
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('listLabel').textContent = 'Próximos Eventos';
+  const evs = eventos.filter(e => e.data_evento >= hoje).slice(0, 8);
+  renderLista(evs, true);
+}
+
+function renderLista(evs, showDate) {
+  const el = document.getElementById('eventList');
+
+  if (!evs.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-text">Nenhum evento aqui</div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = evs.map(e => {
+    const [, m, d] = e.data_evento.split('-').map(Number);
+    const cls = e.churrasqueiro === 'Mayron' ? 'm' : 's';
+    const dateCol = showDate
+      ? `<div class="event-date-col">
+           <div class="ev-d">${d}</div>
+           <div class="ev-m">${MESES_SHORT[m-1]}</div>
+         </div>`
+      : '';
+    return `
+      <div class="event-card ${cls}" onclick="abrirDetalhe('${e.id}')">
+        ${dateCol}
+        <div class="event-info">
+          <div class="event-name">${e.contratante_nome}</div>
+          <div class="event-meta">
+            ${hrFmt(e.horario_inicio)} – ${hrFmt(e.horario_fim)} &nbsp;·&nbsp;
+            ${e.qtd_convidados} convidados &nbsp;·&nbsp;
+            R$${moeda(e.valor_total)}
+          </div>
+        </div>
+        <span class="badge ${cls}">${e.churrasqueiro}</span>
+      </div>`;
+  }).join('');
+}
+
+/* ================================================================
+   DETALHE
+   ================================================================ */
+function abrirDetalhe(id) {
+  detalheAtual = eventos.find(e => e.id === id);
+  if (!detalheAtual) return;
+  const e = detalheAtual;
+
+  const cls = e.churrasqueiro === 'Mayron' ? 'm' : 's';
+  const [y,m,d] = e.data_evento.split('-').map(Number);
+  const dtFmt   = `${d} de ${MESES_LONG[m-1].toLowerCase()} de ${y}`;
+  const adiant  = e.valor_total / 2;
+
+  document.getElementById('detContent').innerHTML = `
+    <span class="badge ${cls}" style="margin-bottom:1rem;display:inline-block">
+      ${e.churrasqueiro}
+    </span>
+    <div class="det-header">
+      <div>
+        <div class="det-name">${e.contratante_nome}</div>
+        <div class="det-date">${dtFmt} &nbsp;·&nbsp; ${hrFmt(e.horario_inicio)} às ${hrFmt(e.horario_fim)}</div>
+      </div>
+      <div class="det-val">R$${moeda(e.valor_total)}</div>
+    </div>
+
+    <div class="det-row">
+      <div class="det-label">CPF</div>
+      <div class="det-value">${e.contratante_cpf}</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Endereço do Contratante</div>
+      <div class="det-value">${e.contratante_endereco}</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Endereço do Evento</div>
+      <div class="det-value">${e.endereco_evento}</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Modalidade</div>
+      <div class="det-value">${e.modalidade}</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Convidados</div>
+      <div class="det-value">${e.qtd_convidados} pessoas</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Adiantamento (50%)</div>
+      <div class="det-value" style="color:var(--success);font-weight:700">R$ ${moeda(adiant)}</div>
+    </div>
+    <div class="det-row">
+      <div class="det-label">Restante (50%)</div>
+      <div class="det-value">R$ ${moeda(adiant)}</div>
+    </div>
+
+    <button class="btn-prim" onclick="gerarContrato(detalheAtual)" style="margin-top:1.25rem">
+      📄 Gerar Contrato PDF
+    </button>
+    <button class="btn-del" onclick="excluir('${e.id}')">🗑️ Excluir Evento</button>
+    <button class="btn-sec" onclick="fechar('ovDet')">Fechar</button>
+  `;
+
+  abrirOverlay('ovDet');
+}
+
+/* ================================================================
+   GERAÇÃO DE CONTRATO
+   ================================================================ */
+function gerarContrato(e) {
+  const MESES_FULL = ['janeiro','fevereiro','março','abril','maio','junho',
+    'julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  const [yE,mE,dE] = e.data_evento.split('-').map(Number);
+  const dtEv = `${dE} de ${MESES_FULL[mE-1]} de ${yE}`;
+
+  const [yC,mC,dC] = e.data_contrato.split('-').map(Number);
+  const dtCt = `${dC} de ${MESES_FULL[mC-1]} de ${yC}`;
+
+  const adiant  = e.valor_total / 2;
+  const qtdExt  = qtdExtenso(e.qtd_convidados);
+  const valExt  = valExtenso(e.valor_total);
+  const adExt   = valExtenso(adiant);
+  const valFmt  = moeda(e.valor_total);
+  const adFmt   = moeda(adiant);
+
+  /* Dados por churrasqueiro */
+  const CT = {
+    Mayron: {
+      nome:    'Mayron Nataniel da Rosa',
+      cpf:     '047.330.331-09',
+      end:     'Núcleo Rural Quintas do Rio Maranhão, Gleba "A", Chácara 19, Planaltina – Brasília DF',
+      meio:    'transferência ou Pix',
+      pagamentos: `
+        <p style="margin-left:2em;font-style:italic;margin-bottom:0.8em">
+          <strong>Dados Pix:</strong> mayronnataniel6875@gmail.com – Mayron Nataniel da Rosa
+        </p>`
+    },
+    Saymon: {
+      nome:    'Saymon Luciano da Rosa',
+      cpf:     '047.329.921-61',
+      end:     'SHCES Quadra 1307, Bloco G, Apartamento 201, Cruzeiro Novo – Brasília DF',
+      meio:    'transferência',
+      pagamentos: `
+        <p style="margin-left:2em;font-style:italic;margin-bottom:0.5em">
+          <strong>Dados Pix:</strong> CPF 047.329.921-61 – Saymon Luciano da Rosa (NuBank)
+        </p>
+        <p style="margin-left:2em;font-style:italic;margin-bottom:0.8em">
+          <strong>Dados para transferência:</strong> Agência 0001 | Conta 93163254-1 | Banco 0260 / Nu pagamentos S.A
+        </p>`
+    }
+  };
+
+  const ct = CT[e.churrasqueiro];
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Contrato – ${e.contratante_nome}</title>
+<style>
+  @page { margin: 3cm 2.5cm; }
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.9;
+    color: #000;
+    max-width: 18cm;
+    margin: 0 auto;
+    padding: 1cm 0;
+  }
+  h1 {
+    text-align: center;
+    font-size: 14pt;
+    letter-spacing: 0.4em;
+    margin-bottom: 2.5em;
+    font-weight: bold;
+  }
+  p { margin-bottom: 1em; text-align: justify; }
+  .assinaturas {
+    margin-top: 5em;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    gap: 2cm;
+  }
+  .assin-bloco { flex: 1; }
+  .assin-linha { border-top: 1px solid #000; margin-bottom: 0.5em; padding-top: 0.5em; }
+  .btn-print {
+    position: fixed; top: 1rem; right: 1rem;
+    padding: 0.7rem 1.4rem;
+    background: #b84c1e; color: white; border: none;
+    border-radius: 8px; font-size: 1rem; font-weight: 700;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    font-family: sans-serif;
+  }
+  .btn-print:hover { background: #e8722a; }
+  @media print { .btn-print { display: none; } }
+</style>
+</head>
+<body>
+
+<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+
+<h1>CONTRATO</h1>
+
+<p><strong>CONTRATANTE:</strong> ${e.contratante_nome}, CPF ${e.contratante_cpf}, endereço: ${e.contratante_endereco}.</p>
+
+<p><strong>CONTRATADO:</strong> ${ct.nome}, CPF ${ct.cpf}, endereço: ${ct.end}.</p>
+
+<p><strong>OBJETO:</strong> Prestação de Serviços do tipo: ${e.modalidade} para ${e.qtd_convidados} (${qtdExt}) pessoas adultas, no valor total de R$${valFmt} (${valExt}), a ser prestado no dia ${dtEv}, no horário compreendido entre ${hrFmt(e.horario_inicio)} e ${hrFmt(e.horario_fim)}, no seguinte endereço: ${e.endereco_evento}.</p>
+
+<p>O <strong>CONTRATADO</strong> fornecerá o material e pessoal necessário à prestação do serviço acima descrito, conforme orçamento enviado, exceto mesas, cadeiras e toalhas para a acomodação dos convidados.</p>
+
+<p>O <strong>CONTRATANTE</strong> deverá enviar por meio de ${ct.meio}, o valor de R$${adFmt} (${adExt}), referente ao adiantamento do serviço contratado, <strong>confirmando o agendamento.</strong></p>
+
+${ct.pagamentos}
+
+<p>O <strong>CONTRATANTE</strong> pagará o restante, no valor de R$${adFmt} (${adExt}), no dia ${dtEv}, por ocasião do término da prestação de serviço.</p>
+
+<p>O <strong>CONTRATADO</strong> responderá por danos decorrentes da prestação do serviço contratado, que resultem da imperícia ou negligência de seus empregados, segundo os princípios gerais de responsabilidade.</p>
+
+<p>O <strong>CONTRATANTE</strong> responderá pela quebra ou extravio de pratos, copos e/ou talheres, que derem causa, o contratante ou seus convidados.</p>
+
+<p><strong>A proposta/orçamento enviada, mais os e-mails e mensagens eletrônicas trocadas</strong>, <strong>quando acordados e respondidos</strong> são parte integrante deste contrato e deverão ser cumpridos na íntegra por ambas as partes.</p>
+
+<p>As partes elegem o foro de Brasília, DF para dirimir quaisquer dúvidas decorrentes do presente contrato.</p>
+
+<p><strong>CONTRATANTE</strong> e <strong>CONTRATADO</strong> concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 2 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.</p>
+
+<p style="margin-top:2em">${dtCt}.</p>
+
+<div class="assinaturas">
+  <div class="assin-bloco">
+    <div class="assin-linha"></div>
+    <strong>CONTRATADO</strong><br>${ct.nome}
+  </div>
+  <div class="assin-bloco">
+    <div class="assin-linha"></div>
+    <strong>CONTRATANTE</strong><br>${e.contratante_nome}
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { toast('Permita pop-ups para gerar o contrato'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+/* ================================================================
+   FORM HELPERS
+   ================================================================ */
+function abrirForm() {
+  /* Reset */
+  ctSel = null;
+  ['ctMayron','ctSaymon'].forEach(id => {
+    document.getElementById(id).className = 'ct-btn';
+  });
+  ['fData','fInicio','fFim','fNome','fCPF','fEnd','fEndEv'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('fModal').value = '';
+  document.getElementById('fQtd').value   = '';
+  document.getElementById('fValor').value = '';
+  document.getElementById('extQtd').textContent = '';
+  document.getElementById('extVal').textContent = '';
+  document.getElementById('alertDisp').className = 'alert';
+  document.getElementById('alertDisp').textContent = '';
+  document.getElementById('fDataContrato').valueAsDate = new Date();
+
+  if (diaSel) {
+    document.getElementById('fData').value = diaSel;
+    checkDisp();
+  }
+
+  abrirOverlay('ovForm');
+}
+
+function selCt(nome) {
+  ctSel = nome;
+  const clsM = nome === 'Mayron' ? 'ct-btn sel m' : 'ct-btn';
+  const clsS = nome === 'Saymon' ? 'ct-btn sel s' : 'ct-btn';
+  document.getElementById('ctMayron').className = clsM;
+  document.getElementById('ctSaymon').className = clsS;
+  checkDisp();
+}
+
+function checkDisp() {
+  const data  = document.getElementById('fData').value;
+  const al    = document.getElementById('alertDisp');
+  al.className = 'alert';
+  al.textContent = '';
+
+  if (!data) return;
+
+  const temM = eventos.some(e => e.data_evento === data && e.churrasqueiro === 'Mayron');
+  const temS = eventos.some(e => e.data_evento === data && e.churrasqueiro === 'Saymon');
+
+  if (temM && temS) {
+    al.className = 'alert show d';
+    al.textContent = '⛔ Data indisponível — ambos os churrasqueiros já têm evento nesse dia.';
+    return;
+  }
+
+  if (ctSel) {
+    const ctOcup = ctSel === 'Mayron' ? temM : temS;
+    const outro  = ctSel === 'Mayron' ? 'Saymon' : 'Mayron';
+    if (ctOcup) {
+      al.className = 'alert show w';
+      al.textContent = `⚠️ ${ctSel} já tem evento nessa data. ${outro} está disponível.`;
+      return;
+    }
+  }
+
+  if (temM || temS) {
+    const ocup  = temM ? 'Mayron' : 'Saymon';
+    const livre = temM ? 'Saymon' : 'Mayron';
+    al.className = 'alert show w';
+    al.textContent = `ℹ️ ${ocup} já está agendado nessa data. Apenas ${livre} disponível.`;
+  }
+}
+
+function maskCPF(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  v = v.replace(/(\d{3})(\d)/,    '$1.$2');
+  v = v.replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+  v = v.replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+  el.value = v;
+}
+
+function updExtQtd() {
+  const n  = parseInt(document.getElementById('fQtd').value);
+  const el = document.getElementById('extQtd');
+  el.textContent = isNaN(n) || n < 1 ? '' : qtdExtenso(n);
+}
+
+function updExtVal() {
+  const v  = parseFloat(document.getElementById('fValor').value);
+  const el = document.getElementById('extVal');
+  el.textContent = isNaN(v) || v <= 0 ? '' : valExtenso(v);
+}
+
+/* ================================================================
+   MODALS
+   ================================================================ */
+function abrirOverlay(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function fechar(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.getElementById('ovForm').addEventListener('click', e => {
+  if (e.target === e.currentTarget) fechar('ovForm');
+});
+
+document.getElementById('ovDet').addEventListener('click', e => {
+  if (e.target === e.currentTarget) fechar('ovDet');
+});
+
+/* ================================================================
+   UTILITÁRIOS
+   ================================================================ */
+function dateStr(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function hrFmt(t) {
+  const [h, m] = t.split(':');
+  return `${h}h${m}min`;
+}
+
+function moeda(v) {
+  return parseFloat(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* ================================================================
+   NÚMERO POR EXTENSO — Português do Brasil
+   ================================================================ */
+function numExtenso(n) {
+  n = Math.floor(n);
+  if (n === 0) return 'zero';
+
+  const un  = ['','um','dois','três','quatro','cinco','seis','sete','oito','nove',
+    'dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  const dz  = ['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  const ct  = ['','cento','duzentos','trezentos','quatrocentos','quinhentos',
+    'seiscentos','setecentos','oitocentos','novecentos'];
+
+  function sub(x) {
+    if (x === 0)    return '';
+    if (x < 20)     return un[x];
+    if (x < 100)    { const d = ~~(x/10), u = x%10; return dz[d] + (u ? ' e ' + un[u] : ''); }
+    if (x === 100)  return 'cem';
+    const c = ~~(x/100), r = x%100;
+    return ct[c] + (r ? ' e ' + sub(r) : '');
+  }
+
+  if (n < 1000) return sub(n);
+
+  const mil   = ~~(n/1000);
+  const resto = n % 1000;
+  const milS  = mil === 1 ? 'mil' : sub(mil) + ' mil';
+
+  if (!resto) return milS;
+  /* "e" quando resto < 100 ou múltiplo exato de 100 */
+  const useE  = resto < 100 || resto % 100 === 0;
+  return milS + (useE ? ' e ' : ' ') + sub(resto);
+}
+
+/* Quantidade com gênero feminino ("pessoas") */
+function qtdExtenso(n) {
+  return numExtenso(n)
+    .replace(/\bdois\b/g, 'duas')
+    .replace(/\bum\b/g,   'uma');
+}
+
+/* Valor monetário */
+function valExtenso(v) {
+  const reais     = Math.floor(v);
+  const centavos  = Math.round((v - reais) * 100);
+  const rs        = numExtenso(reais) + (reais === 1 ? ' real' : ' reais');
+  if (!centavos) return rs;
+  const cs        = numExtenso(centavos) + (centavos === 1 ? ' centavo' : ' centavos');
+  return rs + ' e ' + cs;
+}
+</script>
+</body>
+</html>
