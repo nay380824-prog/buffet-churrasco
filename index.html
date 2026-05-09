@@ -878,7 +878,7 @@ header {
    ⚙️  CONFIGURAÇÃO — edite apenas estas 3 linhas
    ---------------------------------------------------------------- */
 const SUPABASE_URL  = 'https://xgpcefqkiffzghydjben.supabase.co';   // ex: https://abc123.supabase.co
-const SUPABASE_KEY  = 'sb_publishable_6SdFZoMdQWeZ_OUae_UMCA_1nYM0Npd';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhncGNlZnFraWZmemdoeWRqYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMDkwNjQsImV4cCI6MjA5Mzg4NTA2NH0.ecIz0G8qPC849X0qgx-JlXN3umtpbLLWsN2zZoUdOyM';
 const PIN           = '9215';                // altere o PIN de acesso aqui
 /* ---------------------------------------------------------------- */
 
@@ -886,7 +886,7 @@ const PIN           = '9215';                // altere o PIN de acesso aqui
 let db = null;
 
 function initSupabase() {
-  if (SUPABASE_URL === 'https://xgpcefqkiffzghydjben.supabase.co' || SUPABASE_KEY === 'sb_publishable_6SdFZoMdQWeZ_OUae_UMCA_1nYM0Npd') {
+  if (SUPABASE_URL === 'https://xgpcefqkiffzghydjben.supabase.co' || SUPABASE_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhncGNlZnFraWZmemdoeWRqYmVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMDkwNjQsImV4cCI6MjA5Mzg4NTA2NH0.ecIz0G8qPC849X0qgx-JlXN3umtpbLLWsN2zZoUdOyM') {
     return false; // Credenciais ainda não configuradas
   }
   try {
