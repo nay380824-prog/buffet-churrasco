@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ============================================================
    RESET & TOKENS
@@ -1371,193 +1372,194 @@ function abrirDetalhe(id) {
 }
 
 /* ================================================================
-   GERAÇÃO DE CONTRATO
+   GERAÇÃO DE CONTRATO — jsPDF (PDF real, sem rodapé do navegador)
    ================================================================ */
 function gerarContrato(e) {
+  if (typeof window.jspdf === 'undefined') {
+    toast('Biblioteca PDF ainda carregando, aguarde 2 segundos...');
+    return;
+  }
+
   const MESES_FULL = ['janeiro','fevereiro','março','abril','maio','junho',
     'julho','agosto','setembro','outubro','novembro','dezembro'];
 
   const [yE,mE,dE] = e.data_evento.split('-').map(Number);
   const dtEv = `${dE} de ${MESES_FULL[mE-1]} de ${yE}`;
-
   const [yC,mC,dC] = e.data_contrato.split('-').map(Number);
   const dtCt = `${dC} de ${MESES_FULL[mC-1]} de ${yC}`;
 
-  const adiant  = e.valor_total / 2;
-  const qtdExt  = qtdExtenso(e.qtd_convidados);
-  const valExt  = valExtenso(e.valor_total);
-  const adExt   = valExtenso(adiant);
-  const valFmt  = moeda(e.valor_total);
-  const adFmt   = moeda(adiant);
+  const adiant = e.valor_total / 2;
+  const valExt = valExtenso(e.valor_total);
+  const adExt  = valExtenso(adiant);
+  const valFmt = moeda(e.valor_total);
+  const adFmt  = moeda(adiant);
 
-  /* Monta descrição do OBJETO com crianças e adicional */
   const cri03  = parseInt(e.criancas_0_3)  || 0;
   const cri47  = parseInt(e.criancas_4_7)  || 0;
   const cri812 = parseInt(e.criancas_8_12) || 0;
   const adicDesc = e.adicional_descricao || '';
   const adicVal  = parseFloat(e.adicional_valor) || 0;
 
-  let parteConvidados = `${e.qtd_convidados} (${qtdExt}) pessoas adultas`;
-
-  if (cri03 > 0)
-    parteConvidados += ` e ${cri03} (${qtdExtenso(cri03)}) criança${cri03>1?'s':''} de até 3 anos (gratuito)`;
-  if (cri47 > 0)
-    parteConvidados += `, ${cri47} (${qtdExtenso(cri47)}) criança${cri47>1?'s':''} de 4 a 7 anos (20% do valor por pessoa)`;
-  if (cri812 > 0)
-    parteConvidados += `, ${cri812} (${qtdExtenso(cri812)}) criança${cri812>1?'s':''} de 8 a 12 anos (50% do valor por pessoa)`;
+  let parteConvidados = `${e.qtd_convidados} (${qtdExtenso(e.qtd_convidados)}) pessoas adultas`;
+  if (cri03  > 0) parteConvidados += ` e ${cri03} (${qtdExtenso(cri03)}) criança${cri03>1?'s':''} de até 3 anos (gratuito)`;
+  if (cri47  > 0) parteConvidados += `, ${cri47} (${qtdExtenso(cri47)}) criança${cri47>1?'s':''} de 4 a 7 anos (20% do valor por pessoa)`;
+  if (cri812 > 0) parteConvidados += `, ${cri812} (${qtdExtenso(cri812)}) criança${cri812>1?'s':''} de 8 a 12 anos (50% do valor por pessoa)`;
 
   let parteAdicional = '';
   if (adicDesc && adicVal > 0)
     parteAdicional = `, com valor adicional de R$${moeda(adicVal)} (${valExtenso(adicVal)}) referente a ${adicDesc}`;
 
-  /* Dados por churrasqueiro */
   const CT = {
     Mayron: {
-      nome:    'Mayron Nataniel da Rosa',
-      cpf:     '047.330.331-09',
-      end:     'Núcleo Rural Quintas do Rio Maranhão, Gleba "A", Chácara 19, Planaltina – Brasília DF',
-      meio:    'transferência ou Pix',
-      pagamentos: `<p class="pix-bloco"><strong>Dados Pix:</strong> mayronnataniel6875@gmail.com – Mayron Nataniel da Rosa</p>`
+      nome: 'Mayron Nataniel da Rosa', cpf: '047.330.331-09',
+      end:  'Núcleo Rural Quintas do Rio Maranhão, Gleba "A", Chácara 19, Planaltina – Brasília DF',
+      meio: 'transferência ou Pix',
+      pix:  ['Dados Pix: mayronnataniel6875@gmail.com – Mayron Nataniel da Rosa']
     },
     Saymon: {
-      nome:    'Saymon Luciano da Rosa',
-      cpf:     '047.329.921-61',
-      end:     'SHCES Quadra 1307, Bloco G, Apartamento 201, Cruzeiro Novo – Brasília DF',
-      meio:    'transferência',
-      pagamentos: `
-        <p class="pix-bloco"><strong>Dados Pix:</strong> CPF 047.329.921-61 – Saymon Luciano da Rosa (NuBank)</p>
-        <p class="pix-bloco"><strong>Dados para transferência:</strong> Agência 0001 | Conta 93163254-1 | Banco 0260 / Nu pagamentos S.A</p>`
+      nome: 'Saymon Luciano da Rosa', cpf: '047.329.921-61',
+      end:  'SHCES Quadra 1307, Bloco G, Apartamento 201, Cruzeiro Novo – Brasília DF',
+      meio: 'transferência',
+      pix:  [
+        'Dados Pix: CPF 047.329.921-61 – Saymon Luciano da Rosa (NuBank)',
+        'Dados para transferência: Agência 0001 | Conta 93163254-1 | Banco 0260 / Nu pagamentos S.A'
+      ]
     }
   };
-
   const ct = CT[e.churrasqueiro];
 
-  const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contrato – ${e.contratante_nome}</title>
-<style>
-  @page {
-    size: A4;
-    margin: 0;
+  /* ---- jsPDF setup ---- */
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const mL = 25, mR = 25, mT = 25, mBot = 20;
+  const pW = 210, pH = 297;
+  const cW = pW - mL - mR;
+  let cy = mT;
+  const fSz = 11;
+  const lh  = 5.6;   // mm por linha
+  const pg  = 2.8;   // gap após parágrafo
+
+  doc.setFontSize(fSz);
+
+  /* Calcula largura de um texto (atualiza fonte internamente) */
+  function tw(text, bold, italic) {
+    doc.setFontSize(fSz);
+    doc.setFont('times', bold ? (italic ? 'bolditalic' : 'bold') : (italic ? 'italic' : 'normal'));
+    return doc.getTextWidth(text);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Times New Roman', Times, serif;
-    font-size: 10.5pt;
-    line-height: 1.58;
-    color: #000;
-    background: #fff;
-    padding: 2cm 2.5cm 1.8cm 2.5cm;
+
+  /* Converte string com **negrito** em array de tokens [{t, b, i, w}] */
+  function parse(text, italic) {
+    const segs = [];
+    const re = /\*\*(.*?)\*\*/g;
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) segs.push({t: text.slice(last, m.index), b: false});
+      segs.push({t: m[1], b: true});
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) segs.push({t: text.slice(last), b: false});
+
+    const tokens = [];
+    for (const seg of segs) {
+      const hasLeadingSpace = /^\s/.test(seg.t);
+      const words = seg.t.trim().match(/\S+\s*/g) || [];
+      for (let i = 0; i < words.length; i++) {
+        const wordText = (i === 0 && hasLeadingSpace && tokens.length > 0)
+          ? ' ' + words[i]
+          : words[i];
+        tokens.push({ t: wordText, b: seg.b, i: !!italic, w: tw(wordText, seg.b, !!italic) });
+      }
+    }
+    return tokens;
   }
-  h1 {
-    text-align: center;
-    font-size: 13pt;
-    letter-spacing: 0.4em;
-    margin: 0 0 1.3em 0;
-    font-weight: bold;
+
+  /* Renderiza parágrafo a partir de tokens */
+  function render(tokens, opts = {}) {
+    if (!tokens.length) return;
+    const indent = opts.indent ?? mL;
+
+    // Quebra em linhas
+    const lines = [];
+    let cur = [], curW = 0;
+    for (const tk of tokens) {
+      if (curW + tk.w > cW + 0.1 && cur.length > 0) {
+        lines.push(cur); cur = [tk]; curW = tk.w;
+      } else {
+        cur.push(tk); curW += tk.w;
+      }
+    }
+    if (cur.length) lines.push(cur);
+
+    for (const line of lines) {
+      if (cy > pH - mBot - lh) { doc.addPage(); cy = mT; }
+      let x = opts.center
+        ? (pW - line.reduce((s, t) => s + t.w, 0)) / 2
+        : indent;
+      for (const tk of line) {
+        doc.setFont('times', tk.b ? (tk.i ? 'bolditalic' : 'bold') : (tk.i ? 'italic' : 'normal'));
+        doc.text(tk.t, x, cy);
+        x += tk.w;
+      }
+      cy += lh;
+    }
+    cy += pg;
   }
-  p { margin: 0 0 0.6em 0; text-align: justify; }
-  .pix-bloco { margin: 0 0 0.6em 1.8em; font-style: italic; }
-  .assinaturas {
-    margin-top: 3.5em;
-    display: flex;
-    justify-content: space-around;
-    text-align: center;
-    gap: 2cm;
-  }
-  .assin-bloco { flex: 1; }
-  .assin-linha { border-top: 1px solid #000; margin-bottom: 0.4em; padding-top: 0.4em; }
 
-  /* Barra só na tela */
-  .instrucao-bar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: #1a1a1a;
-    color: #fff;
-    font-family: sans-serif;
-    font-size: 0.82rem;
-    padding: 0.6rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    z-index: 999;
-  }
-  .btn-salvar {
-    padding: 0.5rem 1.4rem;
-    background: #b84c1e; color: white; border: none;
-    border-radius: 6px; font-size: 0.95rem; font-weight: 700;
-    cursor: pointer; font-family: sans-serif;
-  }
-  .btn-salvar:hover { background: #e8722a; }
-  .corpo { margin-top: 3rem; }
+  /* Atalhos */
+  function p(text, opts)  { render(parse(text), opts); }
+  function pi(text, ind)  { render(parse(text, true), { indent: ind ?? mL + 10 }); }
+  function center(text)   { render(parse(text), { center: true }); }
 
-  @media print {
-    .instrucao-bar { display: none !important; }
-    .corpo { margin-top: 0; }
-    body { padding: 2cm 2.5cm 1.8cm 2.5cm; }
-  }
-</style>
-</head>
-<body>
+  /* ---- Conteúdo do contrato ---- */
 
-<div class="instrucao-bar">
-  <span>✅ Rodapé removido — clique para salvar o PDF limpo</span>
-  <button class="btn-salvar" onclick="window.print()">💾 Salvar PDF</button>
-</div>
+  center('**C O N T R A T O**');
+  cy += 2;
 
-<div class="corpo">
-<h1>CONTRATO</h1>
+  p(`**CONTRATANTE:** ${e.contratante_nome}, CPF ${e.contratante_cpf}, endereço: ${e.contratante_endereco}.`);
+  p(`**CONTRATADO:** ${ct.nome}, CPF ${ct.cpf}, endereço: ${ct.end}.`);
+  p(`**OBJETO:** Prestação de Serviços do tipo: ${e.modalidade} para ${parteConvidados}${parteAdicional}, no valor total de R$${valFmt} (${valExt}), a ser prestado no dia ${dtEv}, no horário compreendido entre ${hrFmt(e.horario_inicio)} e ${hrFmt(e.horario_fim)}, no seguinte endereço: ${e.endereco_evento}.`);
+  p(`O **CONTRATADO** fornecerá o material e pessoal necessário à prestação do serviço acima descrito, conforme orçamento enviado, exceto mesas, cadeiras e toalhas para a acomodação dos convidados.`);
+  p(`O **CONTRATANTE** deverá enviar por meio de ${ct.meio}, o valor de R$${adFmt} (${adExt}), referente ao adiantamento do serviço contratado, **confirmando o agendamento.**`);
+  for (const l of ct.pix) pi(l);
+  p(`O **CONTRATANTE** pagará o restante, no valor de R$${adFmt} (${adExt}), no dia ${dtEv}, por ocasião do término da prestação de serviço.`);
+  p(`O **CONTRATADO** responderá por danos decorrentes da prestação do serviço contratado, que resultem da imperícia ou negligência de seus empregados, segundo os princípios gerais de responsabilidade.`);
+  p(`**O CONTRATANTE** responderá pela quebra ou extravio de pratos, copos e/ou talheres, que derem causa, o contratante ou seus convidados.`);
+  p(`**A proposta/orçamento enviada, mais os e-mails e mensagens eletrônicas trocadas**, **quando acordados e respondidos** são parte integrante deste contrato e deverão ser cumpridos na íntegra por ambas as partes.`);
+  p(`As partes elegem o foro de Brasília, DF para dirimir quaisquer dúvidas decorrentes do presente contrato.`);
+  p(`**CONTRATANTE** e **CONTRATADO** concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 2 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.`);
 
-<p><strong>CONTRATANTE:</strong> ${e.contratante_nome}, CPF ${e.contratante_cpf}, endereço: ${e.contratante_endereco}.</p>
+  cy += 4;
+  center(dtCt + '.');
+  cy += 8;
 
-<p><strong>CONTRATADO:</strong> ${ct.nome}, CPF ${ct.cpf}, endereço: ${ct.end}.</p>
+  /* Assinaturas */
+  if (cy > pH - mBot - 20) { doc.addPage(); cy = mT; }
 
-<p><strong>OBJETO:</strong> Prestação de Serviços do tipo: ${e.modalidade} para ${parteConvidados}${parteAdicional}, no valor total de R$${valFmt} (${valExt}), a ser prestado no dia ${dtEv}, no horário compreendido entre ${hrFmt(e.horario_inicio)} e ${hrFmt(e.horario_fim)}, no seguinte endereço: ${e.endereco_evento}.</p>
+  const hw  = cW / 2;
+  const c1  = mL + hw / 2;
+  const c2  = mL + hw + hw / 2;
+  const lw  = 52;
 
-<p>O <strong>CONTRATADO</strong> fornecerá o material e pessoal necessário à prestação do serviço acima descrito, conforme orçamento enviado, exceto mesas, cadeiras e toalhas para a acomodação dos convidados.</p>
+  doc.line(c1 - lw/2, cy, c1 + lw/2, cy);
+  doc.line(c2 - lw/2, cy, c2 + lw/2, cy);
+  cy += 4;
 
-<p>O <strong>CONTRATANTE</strong> deverá enviar por meio de ${ct.meio}, o valor de R$${adFmt} (${adExt}), referente ao adiantamento do serviço contratado, <strong>confirmando o agendamento.</strong></p>
+  doc.setFont('times', 'bold');
+  doc.text('CONTRATADO',  c1 - tw('CONTRATADO',  true) / 2, cy);
+  doc.text('CONTRATANTE', c2 - tw('CONTRATANTE', true) / 2, cy);
+  cy += lh;
 
-${ct.pagamentos}
+  doc.setFont('times', 'normal');
+  doc.text(ct.nome,            c1 - tw(ct.nome) / 2,            cy);
+  doc.text(e.contratante_nome, c2 - tw(e.contratante_nome) / 2, cy);
 
-<p>O <strong>CONTRATANTE</strong> pagará o restante, no valor de R$${adFmt} (${adExt}), no dia ${dtEv}, por ocasião do término da prestação de serviço.</p>
-
-<p>O <strong>CONTRATADO</strong> responderá por danos decorrentes da prestação do serviço contratado, que resultem da imperícia ou negligência de seus empregados, segundo os princípios gerais de responsabilidade.</p>
-
-<p>O <strong>CONTRATANTE</strong> responderá pela quebra ou extravio de pratos, copos e/ou talheres, que derem causa, o contratante ou seus convidados.</p>
-
-<p><strong>A proposta/orçamento enviada, mais os e-mails e mensagens eletrônicas trocadas</strong>, <strong>quando acordados e respondidos</strong> são parte integrante deste contrato e deverão ser cumpridos na íntegra por ambas as partes.</p>
-
-<p>As partes elegem o foro de Brasília, DF para dirimir quaisquer dúvidas decorrentes do presente contrato.</p>
-
-<p><strong>CONTRATANTE</strong> e <strong>CONTRATADO</strong> concordam e estão ajustados com todas as normas e cláusulas estipuladas neste contrato e assim assinam o presente termo em 2 (duas) vias de igual teor, os quais passam a ter força legal entre as partes.</p>
-
-<p style="margin-top:2em">${dtCt}.</p>
-
-<div class="assinaturas">
-  <div class="assin-bloco">
-    <div class="assin-linha"></div>
-    <strong>CONTRATADO</strong><br>${ct.nome}
-  </div>
-  <div class="assin-bloco">
-    <div class="assin-linha"></div>
-    <strong>CONTRATANTE</strong><br>${e.contratante_nome}
-  </div>
-</div>
-</div><!-- fim corpo -->
-
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-  if (!win) { toast('Permita pop-ups para gerar o contrato'); }
+  /* Download */
+  const fname = 'Contrato_' + e.contratante_nome.replace(/\s+/g, '_').replace(/[^\w\u00C0-\u024F]/g, '') + '.pdf';
+  doc.save(fname);
 }
+
 
 /* ================================================================
    FORM HELPERS
