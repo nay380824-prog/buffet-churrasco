@@ -2542,10 +2542,9 @@ function gerarOrcBuffet() {
   wpLink('churrascoembrasilia.com.br', 'https://churrascoembrasilia.com.br');
   cy += 4;
 
-  /* Bandeira gaúcha no canto inferior direito */
+  /* Bandeira gaúcha fixada no canto inferior direito da página 3 */
   const flagW=65, flagH=flagW*(1414/2000);
   const flagX=PW-flagW-8, flagY=PH-flagH-8;
-  if (flagY < cy) { startPage(); }
   doc.addImage(IMG_FLAG, 'JPEG', flagX, flagY, flagW, flagH);
 
   doc.save('Orcamento_Buffet' + (versaoOrc==='pacote'?'_'+pacoteOrc.charAt(0).toUpperCase()+pacoteOrc.slice(1):'_Completo') + '.pdf');
