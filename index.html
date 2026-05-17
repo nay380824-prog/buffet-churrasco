@@ -2391,25 +2391,59 @@ function gerarOrcBuffet() {
   /* ======== PÁGINA 1 ======== */
   startPage(true);
 
-  wp('Conforme solicitado segue uma sugestão detalhada, proposta inclui profissionais treinados, toalha/forro para a mesa do buffet, pratos e talheres individuais, todo material para fazer e servir o buffet e as entradas (exceto mesas, cadeiras e toalhas para acomodação dos participantes).', { after:4 });
-  wp('O Cardápio e os ingredientes são apenas sugestivos e podem ser alterados (sujeito a alteração de valores).', { after:4 });
-  wp('Copos e garçons para servir bebidas são fornecidos somente quando o evento é contratado com bebidas, os forros/toalhas, mesas e cadeiras para acomodação dos participantes e mesa para montagem do buffet poderão ser fornecidos mediante acordo prévio (custo adicional).', { color:HL, after:4 });
-  wp('Crianças até 3 (três) anos não pagam, de 4 (quatro) a 7 (sete) anos pagam 20% do valor por pessoa, 8 (oito) a 12 (doze) anos pagam 50% do valor por pessoa, e a partir de 12 (doze) anos pagam o valor integral.', { color:HL, after:4 });
-  wp('A duração do evento é de até cinco horas sem contar o tempo de preparo e montagem, quando contratado com bebidas o consumo será livre durante o período (5 horas), garantimos a quantidade mínima de 550 gr de carnes por participante adulto, para o agendamento deverá ser informado a quantidade total de adultos e crianças (mesmo que isentas de pagamento).', { after:4 });
-  wp('Agendamento de eventos mediante disponibilidade de data, somente com o adiantamento de 50% do valor contratado que poderá ser pago em espécie ou depositado/transferido para a conta a seguir:', { color:HL, after:4 });
+  wp('Conforme solicitado segue uma sugestão detalhada, proposta inclui profissionais treinados, toalha/forro para a mesa do buffet, pratos e talheres individuais, todo material para fazer e servir o buffet e as entradas (exceto mesas, cadeiras e toalhas para acomodação dos participantes).', { after:2.5 });
+  wp('O Cardápio e os ingredientes são apenas sugestivos e podem ser alterados (sujeito a alteração de valores).', { after:2.5 });
+  wp('Copos e garçons para servir bebidas são fornecidos somente quando o evento é contratado com bebidas, os forros/toalhas, mesas e cadeiras para acomodação dos participantes e mesa para montagem do buffet poderão ser fornecidos mediante acordo prévio (custo adicional).', { color:HL, after:2.5 });
+  wp('Crianças até 3 (três) anos não pagam, de 4 (quatro) a 7 (sete) anos pagam 20% do valor por pessoa, 8 (oito) a 12 (doze) anos pagam 50% do valor por pessoa, e a partir de 12 (doze) anos pagam o valor integral.', { color:HL, after:2.5 });
+  wp('A duração do evento é de até cinco horas sem contar o tempo de preparo e montagem, quando contratado com bebidas o consumo será livre durante o período (5 horas), garantimos a quantidade mínima de 550 gr de carnes por participante adulto, para o agendamento deverá ser informado a quantidade total de adultos e crianças (mesmo que isentas de pagamento).', { after:2.5 });
+  wp('Agendamento de eventos mediante disponibilidade de data, somente com o adiantamento de 50% do valor contratado que poderá ser pago em espécie ou depositado/transferido para a conta a seguir:', { color:HL, after:2.5 });
 
   /* PIX */
-  [ct.pixLinha1, ct.pixLinha2, ct.pixLinha3].forEach(l => wp(l, { align:'center', after:1 }));
-  cy+=3;
+  [ct.pixLinha1, ct.pixLinha2, ct.pixLinha3].forEach(l => wp(l, { align:'center', after:0.8 }));
+  cy += 2;
 
   /* VALORES */
   wp('Valores:', { sz:11, style:'bold', after:2 });
-  if (versaoOrc === 'completa') {
-    valorTextos.completa.forEach(txt => bullet(txt));
-  } else {
-    bullet(valorTextos.pacote[pacoteOrc]);
+
+  /* Bullet com preço em laranja — renderiza segmentos de cor diferente por linha */
+  function bulletValor(text) {
+    const x = mL + 5;
+    const w = mR - x - 1;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    const lines = doc.splitTextToSize(text, w);
+
+    lines.forEach((line, li) => {
+      if (cy + lhF(8.5) > PH - 12) { startPage(); }
+      if (li === 0) { doc.setFillColor(...WHITE); doc.circle(x-2.5, cy-2, 0.5,'F'); }
+
+      /* Dividir linha em segmentos: texto normal + R$XX,XX em AMBER */
+      const priceRe = /R\$\s*[\d.,]+/g;
+      const segs = []; let last = 0, pm;
+      while ((pm = priceRe.exec(line)) !== null) {
+        if (pm.index > last) segs.push({ t: line.slice(last, pm.index), c: WHITE });
+        segs.push({ t: pm[0], c: AMBER });
+        last = pm.index + pm[0].length;
+      }
+      if (last < line.length) segs.push({ t: line.slice(last), c: WHITE });
+
+      let curX = x;
+      segs.forEach(seg => {
+        doc.setTextColor(...seg.c);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+        doc.text(seg.t, curX, cy);
+        curX += doc.getTextWidth(seg.t);
+      });
+      cy += lhF(8.5);
+    });
+    cy += 1.5;
   }
-  cy+=3;
+
+  if (versaoOrc === 'completa') {
+    valorTextos.completa.forEach(txt => bulletValor(txt));
+  } else {
+    bulletValor(valorTextos.pacote[pacoteOrc]);
+  }
+  cy += 2;
 
   /* Encerramento p1 */
   wp('Se tiver dúvidas ou quiser fazer alterações estamos a disposição.', { align:'center', after:1 });
@@ -2426,9 +2460,9 @@ function gerarOrcBuffet() {
     'Carnes',
     ['Picanha','Ancho','Maminha','Fraldinha','Carne Suína','Linguiça Suína ou Toscana','Linguiça de Frango','Drumet (coxinha da asa)']
   );
-  cy+=2;
-  wp('Arroz Branco', { sz:11, color:AMBER, style:'bold', align:'center', after:2 });
-  wp('Mandioca cozida com manteiga', { sz:11, color:AMBER, style:'bold', align:'center', after:4 });
+  cy += 1;
+  wp('Arroz Branco', { sz:11, color:AMBER, style:'bold', align:'center', after:1 });
+  wp('Mandioca cozida com manteiga', { sz:11, color:AMBER, style:'bold', align:'center', after:3 });
 
   twoColSection(
     'Feijão Tropeiro',
@@ -2436,7 +2470,7 @@ function gerarOrcBuffet() {
     'Vinagrete Tradicional',
     ['Tomate','Cebola','Pimentão verde','Azeite','Vinagre','Sal']
   );
-  cy+=2;
+  cy += 1;
   twoColSection(
     'Salada de folhas e frutas',
     ['Alface (Crespa, Roxa e Americana)','Manga','Tomate cereja'],
@@ -2452,9 +2486,9 @@ function gerarOrcBuffet() {
     'Complementos',
     ['Azeite','Aceto Balsâmico','Molho Barbecue','Molho para saladas','Farofa Temperada']
   );
-  cy+=2;
+  cy += 1;
 
-  wp('Diversos', { sz:11, color:AMBER, style:'bold', align:'center', after:3 });
+  wp('Diversos', { sz:11, color:AMBER, style:'bold', align:'center', after:2 });
 
   const divL=['Sal grosso','Carvão','Palito','Guardanapo','Pratos','Talheres','Material de serviço','Facas churrasco','Esponja para louça','Panos para pia e louça','Plástico filme','Canudos plásticos para Caipiroska (se contratado com bebidas)','Gelo filtrado para caipiroska (se contratado com bebidas)','Limão (se contratado com bebidas)','Açúcar refinado (se contratado com bebidas)','Copo para cerveja (se contratado com bebidas)','Taça Multiuso (se contratado com bebidas)','Copo descartável (se contratado com bebidas)'];
   const divR=['Toalha para mesa do buffet','Potes descartáveis para sobremesa','Colheres descartáveis para sobremesa','Estopa p/ queimadores dos Réchaud','Álcool p/ queimadores dos Réchaud','Álcool p/ higienização','Flanelas para higienização','Detergente líquido'];
@@ -2479,16 +2513,37 @@ function gerarOrcBuffet() {
     }
     cy += rowH + 1.2;
   }
-  cy+=6;
+  cy += 4;
 
-  /* Encerramento final */
-  if (cy>PH-35) { startPage(); }
-  wp('Em caso de dúvidas, seguimos à disposição.', { color:HL, sz:10, align:'center', after:1 });
-  wp('Conheça o nosso instagram: @churrascoembrasilia', { color:HL, sz:10, align:'center', after:1 });
-  wp('Acesse o nosso site: churrascoembrasilia.com.br', { color:HL, sz:10, align:'center', after:4 });
+  /* Encerramento final com links clicáveis */
+  if (cy > PH - 42) { startPage(); }
 
-  /* Bandeira gaúcha no canto inferior direito — proporção 2000×1414 → ~60×42mm */
-  const flagW=65, flagH=flagW*(1414/2000); // ~46mm
+  wp('Em caso de dúvidas, seguimos à disposição.', { color:HL, sz:10, align:'center', after:2 });
+
+  /* Helper para link clicável centralizado */
+  function wpLink(label, url, sz=9.5) {
+    const LINK_COLOR = [255, 183, 77]; // âmbar claro para links
+    doc.setFont('helvetica','normal'); doc.setFontSize(sz); doc.setTextColor(...LINK_COLOR);
+    const tw = doc.getTextWidth(label);
+    const lx = (PW - tw) / 2;
+    doc.text(label, lx, cy);
+    /* Sublinhado */
+    doc.setDrawColor(...LINK_COLOR); doc.setLineWidth(0.2);
+    doc.line(lx, cy + 0.6, lx + tw, cy + 0.6);
+    /* Área clicável */
+    doc.link(lx, cy - sz * 0.353, tw, sz * 0.353 + 1.5, { url });
+    cy += lhF(sz) + 1.5;
+  }
+
+  wp('Conheça o nosso instagram:', { color:HL, sz:10, align:'center', after:0.5 });
+  wpLink('@churrascoembrasilia', 'https://www.instagram.com/churrascoembrasilia');
+  cy += 1;
+  wp('Acesse o nosso site:', { color:HL, sz:10, align:'center', after:0.5 });
+  wpLink('churrascoembrasilia.com.br', 'https://churrascoembrasilia.com.br');
+  cy += 4;
+
+  /* Bandeira gaúcha no canto inferior direito */
+  const flagW=65, flagH=flagW*(1414/2000);
   const flagX=PW-flagW-8, flagY=PH-flagH-8;
   if (flagY < cy) { startPage(); }
   doc.addImage(IMG_FLAG, 'JPEG', flagX, flagY, flagW, flagH);
