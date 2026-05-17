@@ -723,6 +723,57 @@ header {
 .calculo-sugestao.show { display: block; }
 
 /* ============================================================
+   ORÇAMENTOS — CSS
+   ============================================================ */
+.orc-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.orc-tab {
+  padding: 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.orc-tab.active { border-color: var(--primary); background: rgba(232,114,42,0.1); color: var(--primary); }
+
+.check-sec { margin-bottom: 1.25rem; }
+.check-sec-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem; }
+.check-list { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 0.5rem; }
+.check-item-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--border); }
+.check-item-row:last-child { border-bottom: none; }
+.check-item-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+.check-item-row .item-label { font-size: 0.85rem; flex: 1; }
+.check-item-row .custom-input { flex: 1; background: transparent; border: none; color: var(--text); font-size: 0.85rem; font-family: 'DM Sans', sans-serif; outline: none; }
+.check-item-row .item-del { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 1rem; padding: 0 0.3rem; }
+.check-item-row .item-del:hover { color: var(--danger); }
+.btn-add-item { display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: none; border: 1px dashed var(--border); border-radius: 8px; padding: 0.45rem; font-size: 0.8rem; font-family: 'DM Sans', sans-serif; color: var(--muted); cursor: pointer; width: 100%; }
+.btn-add-item:hover { border-color: var(--primary); color: var(--primary); }
+
+.versao-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1rem; }
+.versao-btn { padding: 0.75rem; border: 2px solid var(--border); border-radius: 12px; background: var(--card); cursor: pointer; text-align: center; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--muted); transition: all 0.2s; }
+.versao-btn.sel { border-color: var(--primary); background: rgba(232,114,42,0.1); color: var(--primary); }
+
+.pac-radio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+.pac-btn { padding: 0.6rem 0.3rem; border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); cursor: pointer; text-align: center; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 600; color: var(--muted); transition: all 0.2s; }
+.pac-btn.sel { border-color: var(--amber); background: rgba(245,149,64,0.12); color: var(--amber); }
+
+.price-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.price-row:last-child { border-bottom: none; }
+.price-label { font-size: 0.8rem; color: var(--text); flex: 1; }
+.price-input { width: 80px; padding: 0.4rem 0.5rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface); text-align: right; -webkit-appearance: none; }
+.price-input:focus { outline: none; border-color: var(--primary); }
+.prices-box { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 0.5rem 0.85rem; margin-bottom: 0.9rem; }
+
+/* ============================================================
    SCROLLBAR (webkit)
    ============================================================ */
 .sheet::-webkit-scrollbar { width: 4px; }
@@ -775,7 +826,10 @@ header {
       <span class="flame">🔥</span>
       <h1>Churrasco em Brasília</h1>
     </div>
-    <button class="btn-exit" onclick="sair()">Sair</button>
+    <div style="display:flex;gap:0.5rem;align-items:center">
+      <button class="btn-exit" onclick="abrirOrc()">📋 Orçamentos</button>
+      <button class="btn-exit" onclick="sair()">Sair</button>
+    </div>
   </header>
 
   <!-- Calendário -->
@@ -967,6 +1021,170 @@ header {
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     MODAL: ORÇAMENTOS
+     ============================================================ -->
+<div class="overlay" id="ovOrc">
+  <div class="sheet">
+    <div class="handle"></div>
+    <div class="sheet-title">📋 Orçamentos</div>
+
+    <!-- Tabs -->
+    <div class="orc-tabs">
+      <button class="orc-tab active" id="tabMO"  onclick="switchTabOrc('mo')">🔪 Mão de Obra</button>
+      <button class="orc-tab"        id="tabBuf" onclick="switchTabOrc('buf')">🥩 Buffet Completo</button>
+    </div>
+
+    <!-- ===== FORM: MÃO DE OBRA ===== -->
+    <div id="formMO">
+      <div class="form-sec">
+        <div class="form-sec-label">Churrasqueiro</div>
+        <div class="churrasco-toggle">
+          <div class="ct-btn" id="ctOrcMayron" onclick="selCtOrc('Mayron')">
+            <div class="ct-name">🥩 Mayron</div><div class="ct-role">Nataniel da Rosa</div>
+          </div>
+          <div class="ct-btn" id="ctOrcSaymon" onclick="selCtOrc('Saymon')">
+            <div class="ct-name">🔥 Saymon</div><div class="ct-role">Luciano da Rosa</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Dados do Cliente</div>
+        <div class="form-group">
+          <label>Data de Emissão</label>
+          <input type="date" id="fOrcDataEmissao">
+        </div>
+        <div class="form-group">
+          <label>Nome</label>
+          <input type="text" id="fOrcNome" placeholder="Nome do cliente">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fone</label>
+            <input type="text" id="fOrcFone" placeholder="(61) 99999-9999" inputmode="tel">
+          </div>
+          <div class="form-group">
+            <label>Qtd. Participantes</label>
+            <input type="text" id="fOrcQtd" placeholder="Ex: 18 convidados">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Data do Evento</label>
+          <input type="date" id="fOrcDataEvento">
+        </div>
+        <div class="form-group">
+          <label>Local do Evento</label>
+          <input type="text" id="fOrcLocal" placeholder="Endereço ou nome do local">
+        </div>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Itens do Buffet</div>
+        <div class="check-list" id="list_buff"></div>
+        <button class="btn-add-item" onclick="addItemOrc('buff')">+ Adicionar item</button>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Itens do Churrasco</div>
+        <div class="check-list" id="list_churrasco"></div>
+        <button class="btn-add-item" onclick="addItemOrc('churrasco')">+ Adicionar item</button>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Material de Apoio</div>
+        <div class="check-list" id="list_material"></div>
+        <button class="btn-add-item" onclick="addItemOrc('material')">+ Adicionar item</button>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Equipe</div>
+        <div class="check-list" id="list_equipe"></div>
+        <button class="btn-add-item" onclick="addItemOrc('equipe')">+ Adicionar item</button>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Valor</div>
+        <div class="form-group">
+          <label>Valor Total (R$)</label>
+          <input type="number" id="fOrcValor" placeholder="0,00" inputmode="decimal" step="0.01">
+        </div>
+      </div>
+
+      <button class="btn-prim" onclick="gerarOrcMaoDeObra()">📄 Gerar Orçamento PDF</button>
+      <button class="btn-sec" onclick="fechar('ovOrc')">Cancelar</button>
+    </div>
+
+    <!-- ===== FORM: BUFFET COMPLETO ===== -->
+    <div id="formBuf" style="display:none">
+      <div class="form-sec">
+        <div class="form-sec-label">Churrasqueiro</div>
+        <div class="churrasco-toggle">
+          <div class="ct-btn" id="ctBufMayron" onclick="selCtBuf('Mayron')">
+            <div class="ct-name">🥩 Mayron</div><div class="ct-role">Nataniel da Rosa</div>
+          </div>
+          <div class="ct-btn" id="ctBufSaymon" onclick="selCtBuf('Saymon')">
+            <div class="ct-name">🔥 Saymon</div><div class="ct-role">Luciano da Rosa</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-sec">
+        <div class="form-sec-label">Versão do Orçamento</div>
+        <div class="versao-toggle">
+          <button class="versao-btn sel" id="vBtnCompleta" onclick="selVersao('completa')">
+            📋 Completa<br><small style="font-weight:400;font-size:0.7rem">3 opções de preço</small>
+          </button>
+          <button class="versao-btn" id="vBtnPacote" onclick="selVersao('pacote')">
+            🎯 Por Pacote<br><small style="font-weight:400;font-size:0.7rem">1 pacote do site</small>
+          </button>
+        </div>
+      </div>
+
+      <!-- Versão completa: 3 preços -->
+      <div id="secCompleta">
+        <div class="form-sec">
+          <div class="form-sec-label">Valores por Pessoa</div>
+          <div class="prices-box">
+            <div class="price-row">
+              <span class="price-label">Clássico — sem bebidas</span>
+              <input type="number" class="price-input" id="fP1" value="75" inputmode="decimal" step="0.01">
+            </div>
+            <div class="price-row">
+              <span class="price-label">Festivo — com refrigerantes</span>
+              <input type="number" class="price-input" id="fP2" value="90" inputmode="decimal" step="0.01">
+            </div>
+            <div class="price-row" style="border-bottom:none">
+              <span class="price-label">Premium — com bebidas alcoólicas</span>
+              <input type="number" class="price-input" id="fP3" value="115" inputmode="decimal" step="0.01">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Versão por pacote: escolher 1 -->
+      <div id="secPacote" style="display:none">
+        <div class="form-sec">
+          <div class="form-sec-label">Pacote</div>
+          <div class="pac-radio">
+            <button class="pac-btn sel" id="pacClassico" onclick="selPacote('classico', this)">🥩<br>Clássico</button>
+            <button class="pac-btn"    id="pacFestivo"  onclick="selPacote('festivo',  this)">🥤<br>Festivo</button>
+            <button class="pac-btn"    id="pacPremium"  onclick="selPacote('premium',  this)">🍺<br>Premium</button>
+          </div>
+          <div class="form-group">
+            <label>Valor por Pessoa (R$)</label>
+            <input type="number" id="fPacVal" value="75" inputmode="decimal" step="0.01">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-prim" onclick="gerarOrcBuffet()">📄 Gerar Orçamento PDF</button>
+      <button class="btn-sec" onclick="fechar('ovOrc')">Cancelar</button>
+    </div>
+
+  </div>
+</div>
 
 <!-- ============================================================
      JAVASCRIPT
@@ -1707,6 +1925,10 @@ document.getElementById('ovDet').addEventListener('click', e => {
   if (e.target === e.currentTarget) fechar('ovDet');
 });
 
+document.getElementById('ovOrc').addEventListener('click', e => {
+  if (e.target === e.currentTarget) fechar('ovOrc');
+});
+
 /* ================================================================
    UTILITÁRIOS
    ================================================================ */
@@ -1779,6 +2001,489 @@ function valExtenso(v) {
   if (!centavos) return rs;
   const cs        = numExtenso(centavos) + (centavos === 1 ? ' centavo' : ' centavos');
   return rs + ' e ' + cs;
+}
+
+/* ================================================================
+   ORÇAMENTOS — Estado e helpers
+   ================================================================ */
+let ctOrcSel  = null;
+let ctBufSel  = null;
+let versaoOrc = 'completa';
+let pacoteOrc = 'classico';
+
+const ITEMS_DEFAULT = {
+  buff:      ['Arroz refogado com alho','Feijão tropeiro','Mandioca com manteiga','Vinagrete','Salada de folhas e frutas','Molho para saladas','Azeite'],
+  churrasco: ['Ancho','Picanha','Fraldinha','Coxinha da asa','Coração de galinha','Linguiça Toscana','Pão de alho'],
+  material:  ['Pratos','Talheres','Rechauds','Porta guardanapo','Refratário para saladas','Toalha para linha de servir','Pratos para petiscos','Utensílios para o churrasqueiro','Carvão','Palito','Guardanapo','Barbecue'],
+  equipe:    ['Churrasqueiro','Copeiro']
+};
+
+const PRECO_DEFAULT = { c1: 75, c2: 90, c3: 115 };
+const PAC_PRECO = { classico: 75, festivo: 90, premium: 115 };
+
+function abrirOrc() {
+  ctOrcSel = null; ctBufSel = null;
+  ['ctOrcMayron','ctOrcSaymon','ctBufMayron','ctBufSaymon'].forEach(id =>
+    document.getElementById(id).className = 'ct-btn');
+  document.getElementById('fOrcDataEmissao').valueAsDate = new Date();
+  ['fOrcNome','fOrcFone','fOrcQtd','fOrcLocal'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fOrcDataEvento').value = '';
+  document.getElementById('fOrcValor').value = '';
+  buildChecklists();
+  versaoOrc = 'completa'; pacoteOrc = 'classico';
+  document.getElementById('vBtnCompleta').className = 'versao-btn sel';
+  document.getElementById('vBtnPacote').className   = 'versao-btn';
+  document.getElementById('secCompleta').style.display = 'block';
+  document.getElementById('secPacote').style.display   = 'none';
+  document.getElementById('fP1').value = PRECO_DEFAULT.c1;
+  document.getElementById('fP2').value = PRECO_DEFAULT.c2;
+  document.getElementById('fP3').value = PRECO_DEFAULT.c3;
+  document.getElementById('fPacVal').value = PAC_PRECO.classico;
+  ['pacClassico','pacFestivo','pacPremium'].forEach((id,i) =>
+    document.getElementById(id).className = 'pac-btn' + (i===0?' sel':''));
+  switchTabOrc('mo');
+  abrirOverlay('ovOrc');
+}
+
+function switchTabOrc(tab) {
+  document.getElementById('tabMO').className  = 'orc-tab' + (tab==='mo'  ?' active':'');
+  document.getElementById('tabBuf').className = 'orc-tab' + (tab==='buf' ?' active':'');
+  document.getElementById('formMO').style.display  = tab==='mo'  ? 'block':'none';
+  document.getElementById('formBuf').style.display = tab==='buf' ? 'block':'none';
+}
+
+function selCtOrc(n) {
+  ctOrcSel = n;
+  document.getElementById('ctOrcMayron').className = 'ct-btn'+(n==='Mayron'?' sel m':'');
+  document.getElementById('ctOrcSaymon').className = 'ct-btn'+(n==='Saymon'?' sel s':'');
+}
+
+function selCtBuf(n) {
+  ctBufSel = n;
+  document.getElementById('ctBufMayron').className = 'ct-btn'+(n==='Mayron'?' sel m':'');
+  document.getElementById('ctBufSaymon').className = 'ct-btn'+(n==='Saymon'?' sel s':'');
+}
+
+function selVersao(v) {
+  versaoOrc = v;
+  document.getElementById('vBtnCompleta').className = 'versao-btn'+(v==='completa'?' sel':'');
+  document.getElementById('vBtnPacote').className   = 'versao-btn'+(v==='pacote'  ?' sel':'');
+  document.getElementById('secCompleta').style.display = v==='completa'?'block':'none';
+  document.getElementById('secPacote').style.display   = v==='pacote'  ?'block':'none';
+}
+
+function selPacote(p, btn) {
+  pacoteOrc = p;
+  document.querySelectorAll('.pac-btn').forEach(b => b.className='pac-btn');
+  btn.className = 'pac-btn sel';
+  document.getElementById('fPacVal').value = PAC_PRECO[p];
+}
+
+function buildChecklists() {
+  Object.entries(ITEMS_DEFAULT).forEach(([key, items]) => {
+    document.getElementById('list_'+key).innerHTML = items.map((item,i) => `
+      <div class="check-item-row">
+        <input type="checkbox" id="chk_${key}_${i}" checked>
+        <label class="item-label" for="chk_${key}_${i}">${item}</label>
+      </div>`).join('');
+  });
+}
+
+let customCnt = {};
+function addItemOrc(key) {
+  customCnt[key] = (customCnt[key]||0) + 1;
+  const div = document.createElement('div');
+  div.className = 'check-item-row';
+  div.innerHTML = `
+    <input type="checkbox" checked>
+    <input type="text" class="custom-input" placeholder="Novo item...">
+    <button class="item-del" onclick="this.closest('.check-item-row').remove()">✕</button>`;
+  document.getElementById('list_'+key).appendChild(div);
+  div.querySelector('input[type="text"]').focus();
+}
+
+function getCheckedItems(key) {
+  const items = [];
+  document.getElementById('list_'+key).querySelectorAll('.check-item-row').forEach(row => {
+    const chk = row.querySelector('input[type="checkbox"]');
+    if (!chk.checked) return;
+    const label = row.querySelector('.item-label');
+    const custom = row.querySelector('.custom-input');
+    const txt = label ? label.textContent.trim() : (custom ? custom.value.trim() : '');
+    if (txt) items.push(txt);
+  });
+  return items;
+}
+
+function fmtD(ds) {
+  if (!ds) return '';
+  const [y,m,d] = ds.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* ================================================================
+   GERADOR: ORÇAMENTO MÃO DE OBRA (layout Word)
+   ================================================================ */
+function gerarOrcMaoDeObra() {
+  if (!ctOrcSel) return toast('Selecione o churrasqueiro');
+  const nome = document.getElementById('fOrcNome').value.trim();
+  const valor = parseFloat(document.getElementById('fOrcValor').value);
+  if (!nome) return toast('Informe o nome do cliente');
+  if (!valor || valor <= 0) return toast('Informe o valor total');
+
+  const fone        = document.getElementById('fOrcFone').value.trim();
+  const qtd         = document.getElementById('fOrcQtd').value.trim();
+  const local       = document.getElementById('fOrcLocal').value.trim();
+  const dataEmissao = fmtD(document.getElementById('fOrcDataEmissao').value);
+  const dataEvento  = fmtD(document.getElementById('fOrcDataEvento').value);
+
+  const iB  = getCheckedItems('buff');
+  const iC  = getCheckedItems('churrasco');
+  const iM  = getCheckedItems('material');
+  const iE  = getCheckedItems('equipe');
+
+  const CT_ORC = {
+    Mayron: { cpf: '047.330.331-09', nomeC: 'Mayron Nataniel da Rosa', fecho: 'Mayron' },
+    Saymon: { cpf: '047.329.921-61', nomeC: 'Saymon Luciano da Rosa',  fecho: 'Saymon' }
+  };
+  const ct = CT_ORC[ctOrcSel];
+
+  if (typeof window.jspdf === 'undefined') return toast('Aguarde a biblioteca carregar...');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const PW=210, PH=297, mL=20, mR=190, cW=170;
+  let cy=20;
+
+  function lh(sz) { return sz * 0.353 * 1.5; }
+  function chk(n=6) { if (cy+n > PH-18) { doc.addPage(); cy=20; } }
+
+  function pText(txt, opts={}) {
+    const sz=opts.sz||10, style=opts.style||'normal', x=opts.x||mL, w=opts.w||cW;
+    doc.setFont('times', style); doc.setFontSize(sz); doc.setTextColor(0,0,0);
+    const lines = doc.splitTextToSize(txt, w);
+    lines.forEach(line => { chk(lh(sz)); doc.text(line, x, cy); cy+=lh(sz); });
+    cy += opts.after ?? 2;
+  }
+
+  function pRight(txt, sz=10) {
+    doc.setFont('times','normal'); doc.setFontSize(sz); doc.setTextColor(0,0,0);
+    doc.text(txt, mR, cy, { align: 'right' });
+  }
+
+  /* ---- Cabeçalho ---- */
+  doc.setFont('times','bold'); doc.setFontSize(14); doc.setTextColor(0,0,0);
+  doc.text('Churrasco em Brasília Buffet', mL, cy);
+  pRight('Orçamento - 2026', 11);
+  cy += lh(14);
+  doc.setDrawColor(0); doc.setLineWidth(0.4);
+  doc.line(mL, cy, mR, cy); cy += 5;
+
+  /* ---- Dados do cliente ---- */
+  const campos = [
+    ['Data de emissão:', dataEmissao],
+    ['Nome:', nome],
+    ['Fone:', fone],
+    ['Data:', dataEvento],
+    ['Local:', local],
+    ['Quantidade participantes:', qtd],
+  ];
+  campos.forEach(([label, val]) => {
+    doc.setFont('times','bold'); doc.setFontSize(10);
+    const lw = doc.getTextWidth(label);
+    doc.text(label, mL, cy);
+    doc.setFont('times','normal');
+    doc.text(' ' + val, mL + lw, cy);
+    cy += lh(10);
+  });
+  cy += 3;
+
+  /* ---- Intro ---- */
+  pText('       Conforme solicitado segue uma sugestão detalhada.', { after: 4 });
+
+  /* ---- Seções ---- */
+  const secs = [
+    ['A proposta inclui, relacionado a mesa do Buffet:', iB],
+    ['A proposta inclui, relacionado ao churrasco:', iC],
+    ['A proposta inclui, relacionado ao material de apoio:', iM],
+    ['A proposta inclui, relacionado à equipe:', iE],
+  ];
+  secs.forEach(([label, items]) => {
+    if (!items.length) return;
+    chk(8 + items.length * lh(10));
+    pText('       ' + label, { after: 1 });
+    items.forEach(it => { chk(lh(10)+1); pText('- ' + it, { x: mL+5, after: 0 }); });
+    cy += 3;
+  });
+
+  /* ---- Parágrafos fixos ---- */
+  chk(40);
+  pText('       O Cardápio e os ingredientes são apenas sugestivos e podem ser alterados (sujeito a alteração de valores).', { after: 3 });
+  pText('       Garantimos a quantidade mínima de 550g de carne por pessoa adulta.', { after: 3 });
+  pText('       Agendamento de eventos mediante disponibilidade de data, somente com o adiantamento de 50% do valor contratado que poderá ser pago em espécie ou depositado/transferido para a conta a seguir:', { after: 4 });
+
+  /* ---- PIX ---- */
+  chk(18);
+  doc.setFont('times','bold'); doc.setFontSize(10); doc.setTextColor(0,0,0);
+  doc.text('PIX', PW/2, cy, { align:'center' }); cy+=lh(10);
+  doc.setFont('times','normal');
+  doc.text('CPF: ' + ct.cpf, PW/2, cy, { align:'center' }); cy+=lh(10);
+  doc.text(ct.nomeC, PW/2, cy, { align:'center' }); cy += lh(10)+5;
+
+  /* ---- Valor ---- */
+  chk(10);
+  const valorFmt = parseFloat(valor).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  doc.setFont('times','bold'); doc.setFontSize(11); doc.setTextColor(0,0,0);
+  doc.text('Valor total: R$' + valorFmt, mL, cy); cy+=lh(11)+5;
+
+  /* ---- Encerramento ---- */
+  chk(14);
+  pText('Se tiver dúvidas ou quiser fazer alterações estamos a disposição.', { after: 3 });
+  pText('Atenciosamente, ' + ct.fecho);
+
+  doc.save('Orcamento_MaoDeObra_' + nome.replace(/\s+/g,'_') + '.pdf');
+  toast('✅ Orçamento gerado!');
+}
+
+/* ================================================================
+   GERADOR: ORÇAMENTO BUFFET COMPLETO (layout Canva)
+   ================================================================ */
+function gerarOrcBuffet() {
+  if (!ctBufSel) return toast('Selecione o churrasqueiro');
+  if (typeof window.jspdf === 'undefined') return toast('Aguarde a biblioteca carregar...');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const PW=210, PH=297;
+  const BG=[15,15,15], WHITE=[255,255,255], AMBER=[218,165,40], GRAY=[190,190,190], HL=[195,120,25];
+  const mL=12, mR=198, cW=186;
+  let cy;
+
+  const CT_BUF = {
+    Mayron: { pixLinha1:'PIX', pixLinha2:'mayronnataniel6875@gmail.com', pixLinha3:'Mayron Nataniel da Rosa', fecho:'Saymon/Mayron' },
+    Saymon: { pixLinha1:'PIX', pixLinha2:'CPF: 047.329.921-61',         pixLinha3:'Saymon Luciano da Rosa',  fecho:'Saymon/Mayron' }
+  };
+  const ct = CT_BUF[ctBufSel];
+
+  /* Preços */
+  let p1 = parseFloat(document.getElementById('fP1').value) || 75;
+  let p2 = parseFloat(document.getElementById('fP2').value) || 90;
+  let p3 = parseFloat(document.getElementById('fP3').value) || 115;
+  const pacVal = parseFloat(document.getElementById('fPacVal').value) || 75;
+
+  /* Textos dos valores conforme versão */
+  const valorTextos = {
+    completa: [
+      `Individual sem bebidas R$ ${moeda(p1)} (${valExtenso(p1)});`,
+      `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores) e água mineral sem gás R$ ${moeda(p2)} (${valExtenso(p2)});`,
+      `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores), água mineral sem gás, cerveja Skol ou antártica (outras marcas a combinar com acréscimo no valor) e caipirosca com vodka tridestilada (limão, abacaxi e maracujá) R$ ${moeda(p3)} (${valExtenso(p3)}).`
+    ],
+    pacote: {
+      classico: `Pacote Clássico — Individual sem bebidas R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`,
+      festivo:  `Pacote Festivo — Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores) e água mineral sem gás R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`,
+      premium:  `Pacote Premium — Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores), água mineral sem gás, cerveja Skol ou antártica (outras marcas a combinar com acréscimo no valor) e caipirosca com vodka tridestilada (limão, abacaxi e maracujá) R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`
+    }
+  };
+
+  /* ---- Helpers ---- */
+  function fillBG() {
+    doc.setFillColor(...BG); doc.rect(0, 0, PW, PH, 'F');
+  }
+
+  function drawHeader() {
+    doc.setFillColor(20,20,20); doc.rect(0, 0, PW, 42, 'F');
+    const sw=6;
+    doc.setFillColor(0,130,0);   doc.rect(0, 0,  sw, 14, 'F');
+    doc.setFillColor(220,175,0); doc.rect(0, 14, sw, 14, 'F');
+    doc.setFillColor(180,0,0);   doc.rect(0, 28, sw, 14, 'F');
+    /* Brand */
+    doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(14);
+    doc.text('Churrasco em Brasília Buffet', sw+3, 11);
+    doc.setFont('helvetica','italic'); doc.setFontSize(7.5); doc.setTextColor(...GRAY);
+    doc.text('O tradicional churrasco gaúcho', sw+3, 17);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...WHITE);
+    doc.text('(61) 98265-5292', sw+3, 26);
+    doc.text('(61) 98108-9458', sw+3, 33);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(160,160,160);
+    doc.text('@CHURRASCOEMBRASILIA', sw+3, 40);
+    /* Right */
+    doc.setTextColor(...WHITE); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('Orçamento - 2026', mR, 11, { align:'right' });
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...GRAY);
+    doc.text('Quantidade de convidados: mínimo de 30 adultos', mR, 21, { align:'right' });
+    doc.text('Orçamento válido por 20 dias', mR, 29, { align:'right' });
+  }
+
+  function startPage(first=false) {
+    if (!first) doc.addPage();
+    fillBG(); drawHeader(); cy=48;
+  }
+
+  function lhF(sz) { return sz * 0.353 * 1.5; }
+
+  function wp(text, opts={}) {
+    const sz=opts.sz||8.5, color=opts.color||WHITE, style=opts.style||'normal';
+    const x=opts.x||mL, w=opts.w||(mR-x), after=opts.after??3, align=opts.align||'left';
+    doc.setTextColor(...color); doc.setFont('helvetica', style); doc.setFontSize(sz);
+    const lines=doc.splitTextToSize(text, w);
+    lines.forEach(line=>{
+      if (cy+lhF(sz)>PH-12) { startPage(); }
+      doc.text(line, align==='center'?PW/2:x, cy, { align });
+      cy+=lhF(sz);
+    });
+    cy+=after;
+  }
+
+  function bullet(text, opts={}) {
+    const sz=opts.sz||8.5, color=opts.color||WHITE, x=opts.x||(mL+5);
+    doc.setTextColor(...color); doc.setFont('helvetica','normal'); doc.setFontSize(sz);
+    const lines=doc.splitTextToSize(text, mR-x-1);
+    if (cy+lhF(sz)*lines.length>PH-12) { startPage(); }
+    doc.setFillColor(...color);
+    doc.circle(x-2.5, cy-lhF(sz)/2+1, 0.5, 'F');
+    lines.forEach(line=>{ doc.text(line, x, cy); cy+=lhF(sz); });
+    cy+=1;
+  }
+
+  function secTit(text, cols=false) {
+    if (!cols) {
+      wp(text, { sz:11, color:AMBER, style:'bold', align:'center', after:3 });
+    }
+  }
+
+  function twoColSection(leftTitle, leftItems, rightTitle, rightItems) {
+    /* Render two columns side by side */
+    const col1X=mL, col2X=PW/2+2, colW=(cW/2)-4;
+    const startY=cy;
+
+    /* Left title */
+    doc.setTextColor(...AMBER); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    doc.text(leftTitle, col1X+colW/2, cy, { align:'center' });
+    const afterTit=cy+lhF(10)+2;
+
+    /* Right title */
+    doc.text(rightTitle, col2X+colW/2, cy, { align:'center' });
+    cy=afterTit;
+
+    /* Items in parallel */
+    const maxRows=Math.max(leftItems.length, rightItems.length);
+    for (let i=0;i<maxRows;i++) {
+      if (cy+lhF(8.5)>PH-12) { startPage(); }
+      doc.setTextColor(...WHITE); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      if (leftItems[i]) {
+        doc.setFillColor(...WHITE); doc.circle(col1X+2, cy-3, 0.5, 'F');
+        const ll=doc.splitTextToSize(leftItems[i], colW-5);
+        ll.forEach((l,j)=>{ doc.text(l, col1X+5, cy+(j>0?lhF(8.5)*j:0)); });
+      }
+      if (rightItems[i]) {
+        doc.setFillColor(...WHITE); doc.circle(col2X+2, cy-3, 0.5, 'F');
+        const rl=doc.splitTextToSize(rightItems[i], colW-5);
+        rl.forEach((l,j)=>{ doc.text(l, col2X+5, cy+(j>0?lhF(8.5)*j:0)); });
+      }
+      cy+=lhF(8.5)+0.8;
+    }
+    cy+=4;
+  }
+
+  /* ======== PÁGINA 1 ======== */
+  startPage(true);
+
+  wp('Conforme solicitado segue uma sugestão detalhada, proposta inclui profissionais treinados, toalha/forro para a mesa do buffet, pratos e talheres individuais, todo material para fazer e servir o buffet e as entradas (exceto mesas, cadeiras e toalhas para acomodação dos participantes).', { after:4 });
+  wp('O Cardápio e os ingredientes são apenas sugestivos e podem ser alterados (sujeito a alteração de valores).', { after:4 });
+  wp('Copos e garçons para servir bebidas são fornecidos somente quando o evento é contratado com bebidas, os forros/toalhas, mesas e cadeiras para acomodação dos participantes e mesa para montagem do buffet poderão ser fornecidos mediante acordo prévio (custo adicional).', { color:HL, after:4 });
+  wp('Crianças até 3 (três) anos não pagam, de 4 (quatro) a 7 (sete) anos pagam 20% do valor por pessoa, 8 (oito) a 12 (doze) anos pagam 50% do valor por pessoa, e a partir de 12 (doze) anos pagam o valor integral.', { color:HL, after:4 });
+  wp('A duração do evento é de até cinco horas sem contar o tempo de preparo e montagem, quando contratado com bebidas o consumo será livre durante o período (5 horas), garantimos a quantidade mínima de 550 gr de carnes por participante adulto, para o agendamento deverá ser informado a quantidade total de adultos e crianças (mesmo que isentas de pagamento).', { after:4 });
+  wp('Agendamento de eventos mediante disponibilidade de data, somente com o adiantamento de 50% do valor contratado que poderá ser pago em espécie ou depositado/transferido para a conta a seguir:', { color:HL, after:4 });
+
+  /* PIX */
+  [ct.pixLinha1, ct.pixLinha2, ct.pixLinha3].forEach(l => wp(l, { align:'center', after:1 }));
+  cy+=3;
+
+  /* VALORES */
+  wp('Valores:', { sz:11, style:'bold', after:2 });
+  if (versaoOrc === 'completa') {
+    valorTextos.completa.forEach(txt => bullet(txt));
+  } else {
+    bullet(valorTextos.pacote[pacoteOrc]);
+  }
+  cy+=3;
+
+  /* Encerramento p1 */
+  wp('Se tiver dúvidas ou quiser fazer alterações estamos a disposição.', { align:'center', after:1 });
+  wp('Atenciosamente,', { align:'center', after:0.5 });
+  wp(ct.fecho, { align:'center', after:0.5 });
+  wp('(61) 98265-5292', { align:'center', after:0.5 });
+  wp('(61) 98108-9458', { align:'center', after:0 });
+
+  /* ======== PÁGINA 2 — Entradas + Carnes ======== */
+  startPage();
+  twoColSection(
+    'Entradas',
+    ['Pão de alho (feito com alho, maionese e orégano)','Coração de frango','Coxinha da asa','Linguiças','Iscas de carne'],
+    'Carnes',
+    ['Picanha','Ancho','Maminha','Fraldinha','Carne Suína','Linguiça Suína ou Toscana','Linguiça de Frango','Drumet (coxinha da asa)']
+  );
+  cy+=2;
+  wp('Arroz Branco', { sz:11, color:AMBER, style:'bold', align:'center', after:2 });
+  wp('Mandioca cozida com manteiga', { sz:11, color:AMBER, style:'bold', align:'center', after:4 });
+
+  twoColSection(
+    'Feijão Tropeiro',
+    ['Feijão Fradinho','Farofa Temperada','Bacon','Calabresa','Ovos','Cebola/Alho','Cebolinha picada'],
+    'Vinagrete Tradicional',
+    ['Tomate','Cebola','Pimentão verde','Azeite','Vinagre','Sal']
+  );
+  cy+=2;
+  twoColSection(
+    'Salada de folhas e frutas',
+    ['Alface (Crespa, Roxa e Americana)','Manga','Tomate cereja'],
+    'Salada tipo Mediterrânea',
+    ['Rúcula','Milho','Queijo ricota','Azeitona']
+  );
+
+  /* ======== PÁGINA 3 — Sobremesa + Complementos + Diversos ======== */
+  startPage();
+  twoColSection(
+    'Sobremesa (escolher uma opção)',
+    ['Sorvete com banana caramelada (se no local tiver freezer) OU','Mousse de limão (se no local tiver freezer) OU','Pêssego e Figo em calda com creme de leite'],
+    'Complementos',
+    ['Azeite','Aceto Balsâmico','Molho Barbecue','Molho para saladas','Farofa Temperada']
+  );
+  cy+=2;
+
+  wp('Diversos', { sz:11, color:AMBER, style:'bold', align:'center', after:3 });
+
+  const divL=['Sal grosso','Carvão','Palito','Guardanapo','Pratos','Talheres','Material de serviço','Facas churrasco','Esponja para louça','Panos para pia e louça','Plástico filme','Canudos plásticos para Caipiroska (se contratado com bebidas)','Gelo filtrado para caipiroska (se contratado com bebidas)','Limão (se contratado com bebidas)','Açúcar refinado (se contratado com bebidas)','Copo para cerveja (se contratado com bebidas)','Taça Multiuso (se contratado com bebidas)','Copo descartável (se contratado com bebidas)'];
+  const divR=['Toalha para mesa do buffet','Potes descartáveis para sobremesa','Colheres descartáveis para sobremesa','Estopa p/ queimadores dos Réchaud','Álcool p/ queimadores dos Réchaud','Álcool p/ higienização','Flanelas para higienização','Detergente líquido'];
+
+  const col1X=mL, col2X=PW/2+2, colW=(cW/2)-4;
+  const maxD=Math.max(divL.length, divR.length);
+  for (let i=0;i<maxD;i++) {
+    if (cy+lhF(8.5)>PH-12) { startPage(); }
+    doc.setTextColor(...WHITE); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    if (divL[i]) {
+      doc.setFillColor(...WHITE); doc.circle(col1X+2, cy-3, 0.5,'F');
+      const ll=doc.splitTextToSize(divL[i], colW-5);
+      ll.forEach((l,j)=>{ doc.text(l, col1X+5, cy+(j>0?lhF(8.5)*j:0)); });
+    }
+    if (divR[i]) {
+      doc.setFillColor(...WHITE); doc.circle(col2X+2, cy-3, 0.5,'F');
+      const rl=doc.splitTextToSize(divR[i], colW-5);
+      rl.forEach((l,j)=>{ doc.text(l, col2X+5, cy+(j>0?lhF(8.5)*j:0)); });
+    }
+    cy+=lhF(8.5)+0.8;
+  }
+  cy+=6;
+
+  /* Encerramento final */
+  if (cy>PH-35) { startPage(); }
+  wp('Em caso de dúvidas, seguimos à disposição.', { color:HL, sz:10, align:'center', after:1 });
+  wp('Conheça o nosso instagram: @churrascoembrasilia', { color:HL, sz:10, align:'center', after:1 });
+  wp('Acesse o nosso site: churrascoembrasilia.com.br', { color:HL, sz:10, align:'center', after:0 });
+
+  doc.save('Orcamento_Buffet' + (versaoOrc==='pacote'?'_'+pacoteOrc.charAt(0).toUpperCase()+pacoteOrc.slice(1):'_Completo') + '.pdf');
+  toast('✅ Orçamento gerado!');
 }
 </script>
 </body>
