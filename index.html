@@ -2222,7 +2222,9 @@ function gerarOrcMaoDeObra() {
   /* ---- Parágrafos fixos ---- */
   chk(40);
   pText('       O Cardápio e os ingredientes são apenas sugestivos e podem ser alterados (sujeito a alteração de valores).', { after: 3 });
-  pText('       Garantimos a quantidade mínima de 550g de carne por pessoa adulta.', { after: 3 });
+  if (iC.length > 0) {
+    pText('       Garantimos a quantidade mínima de 550g de carne por pessoa adulta.', { after: 3 });
+  }
   pText('       Agendamento de eventos mediante disponibilidade de data, somente com o adiantamento de 50% do valor contratado que poderá ser pago em espécie ou depositado/transferido para a conta a seguir:', { after: 4 });
 
   /* ---- PIX ---- */
