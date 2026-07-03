@@ -874,7 +874,7 @@ header {
 <div class="overlay" id="ovForm">
   <div class="sheet" id="shForm">
     <div class="handle"></div>
-    <div class="sheet-title">Novo Evento</div>
+    <div class="sheet-title" id="shFormTitle">Novo Evento</div>
 
     <!-- Churrasqueiro -->
     <div class="form-sec">
@@ -1237,10 +1237,24 @@ let diaSel        = null;
 let ctSel         = null;   // churrasqueiro selecionado no form
 let pinBuf        = '';
 let detalheAtual  = null;
+let modoEdicao    = false;   // true quando editando evento existente
+let eventoEditId  = null;    // id do evento sendo editado
 
 /* ================================================================
-   LOGIN / PIN
+   KEEP-ALIVE — Evita pausa do Supabase por inatividade
+   Roda toda vez que alguém abre o link, mesmo sem fazer login
    ================================================================ */
+(async function keepAlive() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/eventos_buffet?select=id&limit=1`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+  } catch (e) { /* falha silenciosa — não afeta o app */ }
+})();
 function kp(c) {
   if (pinBuf.length >= 4) return;
   pinBuf += c;
@@ -1339,8 +1353,12 @@ async function salvar() {
   if (!valor || valor<=0) return toast('Informe o valor total');
   if (!dataCt)            return toast('Informe a data de assinatura');
 
-  /* Conflito */
-  const conflito = eventos.find(e => e.data_evento === data && e.churrasqueiro === ctSel);
+  /* Conflito — ignora o próprio evento ao editar */
+  const conflito = eventos.find(e =>
+    e.data_evento === data &&
+    e.churrasqueiro === ctSel &&
+    e.id !== eventoEditId
+  );
   if (conflito) return toast(`${ctSel} já tem evento nessa data!`);
 
   /* Salvar */
@@ -1348,45 +1366,67 @@ async function salvar() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> Salvando...';
 
-  const { data: saved, error } = await db
-    .from('eventos_buffet')
-    .insert([{
-      churrasqueiro:        ctSel,
-      data_evento:          data,
-      horario_inicio:       inicio,
-      horario_fim:          fim,
-      contratante_nome:     nome,
-      contratante_cpf:      cpf,
-      contratante_endereco: end,
-      endereco_evento:      endEv,
-      modalidade:           modal,
-      qtd_convidados:       qtd,
-      valor_total:          valor,
-      data_contrato:        dataCt,
-      criancas_0_3:         cri03,
-      criancas_4_7:         cri47,
-      criancas_8_12:        cri812,
-      adicional_descricao:  adicDesc || null,
-      adicional_valor:      adicVal  || null
-    }])
-    .select()
-    .single();
+  const payload = {
+    churrasqueiro:        ctSel,
+    data_evento:          data,
+    horario_inicio:       inicio,
+    horario_fim:          fim,
+    contratante_nome:     nome,
+    contratante_cpf:      cpf,
+    contratante_endereco: end,
+    endereco_evento:      endEv,
+    modalidade:           modal,
+    qtd_convidados:       qtd,
+    valor_total:          valor,
+    data_contrato:        dataCt,
+    criancas_0_3:         cri03,
+    criancas_4_7:         cri47,
+    criancas_8_12:        cri812,
+    adicional_descricao:  adicDesc || null,
+    adicional_valor:      adicVal  || null
+  };
+
+  let saved, error;
+
+  if (modoEdicao && eventoEditId) {
+    /* UPDATE */
+    ({ data: saved, error } = await db
+      .from('eventos_buffet')
+      .update(payload)
+      .eq('id', eventoEditId)
+      .select()
+      .single());
+  } else {
+    /* INSERT */
+    ({ data: saved, error } = await db
+      .from('eventos_buffet')
+      .insert([payload])
+      .select()
+      .single());
+  }
 
   btn.disabled = false;
-  btn.innerHTML = '💾 Salvar e Gerar Contrato';
+  btn.innerHTML = modoEdicao ? '💾 Salvar Alterações' : '💾 Salvar e Gerar Contrato';
 
   if (error) { console.error(error); return toast('Erro ao salvar'); }
 
-  eventos.push(saved);
-  renderCal();
-  fechar('ovForm');
-  toast('Evento salvo! Gerando contrato...');
-
-  diaSel = data;
-  renderCal();
-  listarDia(data);
-
-  setTimeout(() => gerarContrato(saved), 500);
+  if (modoEdicao && eventoEditId) {
+    eventos = eventos.map(e => e.id === eventoEditId ? saved : e);
+    modoEdicao = false; eventoEditId = null;
+    renderCal();
+    fechar('ovForm');
+    toast('✅ Evento atualizado!');
+    listarDia(saved.data_evento);
+  } else {
+    eventos.push(saved);
+    renderCal();
+    fechar('ovForm');
+    toast('Evento salvo! Gerando contrato...');
+    diaSel = data;
+    renderCal();
+    listarDia(data);
+    setTimeout(() => gerarContrato(saved), 500);
+  }
 }
 
 async function excluir(id) {
@@ -1585,6 +1625,7 @@ function abrirDetalhe(id) {
     <button class="btn-prim" onclick="gerarContrato(detalheAtual)" style="margin-top:1.25rem">
       📄 Gerar Contrato PDF
     </button>
+    <button class="btn-sec" onclick="abrirEditar('${e.id}')">✏️ Editar Evento</button>
     <button class="btn-del" onclick="excluir('${e.id}')">🗑️ Excluir Evento</button>
     <button class="btn-sec" onclick="fechar('ovDet')">Fechar</button>
   `;
@@ -1785,7 +1826,53 @@ function gerarContrato(e) {
 /* ================================================================
    FORM HELPERS
    ================================================================ */
+function abrirEditar(id) {
+  const e = eventos.find(ev => ev.id === id);
+  if (!e) return;
+  fechar('ovDet');
+
+  modoEdicao   = true;
+  eventoEditId = id;
+
+  // Preencher churrasqueiro
+  ctSel = e.churrasqueiro;
+  document.getElementById('btnMayron').className = 'ct-btn' + (ctSel==='Mayron'?' sel m':'');
+  document.getElementById('btnSaymon').className = 'ct-btn' + (ctSel==='Saymon'?' sel s':'');
+
+  // Preencher campos
+  document.getElementById('fData').value              = e.data_evento;
+  document.getElementById('fInicio').value            = e.horario_inicio;
+  document.getElementById('fFim').value               = e.horario_fim;
+  document.getElementById('fNome').value              = e.contratante_nome;
+  document.getElementById('fCPF').value               = e.contratante_cpf;
+  document.getElementById('fEnd').value               = e.contratante_endereco;
+  document.getElementById('fEndEv').value             = e.endereco_evento;
+  document.getElementById('fModal').value             = e.modalidade;
+  document.getElementById('fQtd').value               = e.qtd_convidados;
+  document.getElementById('fValor').value             = e.valor_total;
+  document.getElementById('fCri03').value             = e.criancas_0_3  || 0;
+  document.getElementById('fCri47').value             = e.criancas_4_7  || 0;
+  document.getElementById('fCri812').value            = e.criancas_8_12 || 0;
+  document.getElementById('fAdicDesc').value          = e.adicional_descricao || '';
+  document.getElementById('fAdicVal').value           = e.adicional_valor || '';
+  document.getElementById('fDataContrato').value      = e.data_contrato;
+
+  updExtQtd(); updExtVal();
+  document.getElementById('alertDisp').className    = 'alert';
+  document.getElementById('alertDisp').textContent  = '';
+  document.getElementById('calcSug').className      = 'calculo-sugestao';
+
+  // Título do modal muda para "Editar Evento"
+  document.getElementById('shFormTitle').textContent = 'Editar Evento';
+  document.getElementById('btnSalvar').innerHTML     = '💾 Salvar Alterações';
+
+  abrirOverlay('ovForm');
+}
+
 function abrirForm() {
+  modoEdicao = false; eventoEditId = null;
+  document.getElementById('shFormTitle').textContent = 'Novo Evento';
+  document.getElementById('btnSalvar').innerHTML     = '💾 Salvar e Gerar Contrato';
   /* Reset */
   ctSel = null;
   ['ctMayron','ctSaymon'].forEach(id => {
