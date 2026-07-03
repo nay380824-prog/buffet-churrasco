@@ -1827,46 +1827,53 @@ function gerarContrato(e) {
    FORM HELPERS
    ================================================================ */
 function abrirEditar(id) {
-  const e = eventos.find(ev => ev.id === id);
-  if (!e) return;
-  fechar('ovDet');
+  try {
+    const e = eventos.find(ev => ev.id === id);
+    if (!e) { toast('Evento não encontrado'); return; }
 
-  modoEdicao   = true;
-  eventoEditId = id;
+    modoEdicao   = true;
+    eventoEditId = id;
 
-  // Preencher churrasqueiro
-  ctSel = e.churrasqueiro;
-  document.getElementById('ctMayron').className = 'ct-btn' + (ctSel==='Mayron'?' sel m':'');
-  document.getElementById('ctSaymon').className = 'ct-btn' + (ctSel==='Saymon'?' sel s':'');
+    // Preencher churrasqueiro
+    ctSel = e.churrasqueiro;
+    document.getElementById('ctMayron').className = 'ct-btn' + (ctSel==='Mayron'?' sel m':'');
+    document.getElementById('ctSaymon').className = 'ct-btn' + (ctSel==='Saymon'?' sel s':'');
 
-  // Preencher campos
-  document.getElementById('fData').value              = e.data_evento;
-  document.getElementById('fInicio').value            = e.horario_inicio;
-  document.getElementById('fFim').value               = e.horario_fim;
-  document.getElementById('fNome').value              = e.contratante_nome;
-  document.getElementById('fCPF').value               = e.contratante_cpf;
-  document.getElementById('fEnd').value               = e.contratante_endereco;
-  document.getElementById('fEndEv').value             = e.endereco_evento;
-  document.getElementById('fModal').value             = e.modalidade;
-  document.getElementById('fQtd').value               = e.qtd_convidados;
-  document.getElementById('fValor').value             = e.valor_total;
-  document.getElementById('fCri03').value             = e.criancas_0_3  || 0;
-  document.getElementById('fCri47').value             = e.criancas_4_7  || 0;
-  document.getElementById('fCri812').value            = e.criancas_8_12 || 0;
-  document.getElementById('fAdicDesc').value          = e.adicional_descricao || '';
-  document.getElementById('fAdicVal').value           = e.adicional_valor || '';
-  document.getElementById('fDataContrato').value      = e.data_contrato;
+    // Preencher campos do formulário
+    document.getElementById('fData').value         = e.data_evento    || '';
+    document.getElementById('fInicio').value       = e.horario_inicio || '';
+    document.getElementById('fFim').value          = e.horario_fim    || '';
+    document.getElementById('fNome').value         = e.contratante_nome     || '';
+    document.getElementById('fCPF').value          = e.contratante_cpf      || '';
+    document.getElementById('fEnd').value          = e.contratante_endereco || '';
+    document.getElementById('fEndEv').value        = e.endereco_evento      || '';
+    document.getElementById('fModal').value        = e.modalidade           || '';
+    document.getElementById('fQtd').value          = e.qtd_convidados       || '';
+    document.getElementById('fValor').value        = e.valor_total          || '';
+    document.getElementById('fCri03').value        = e.criancas_0_3  || 0;
+    document.getElementById('fCri47').value        = e.criancas_4_7  || 0;
+    document.getElementById('fCri812').value       = e.criancas_8_12 || 0;
+    document.getElementById('fAdicDesc').value     = e.adicional_descricao || '';
+    document.getElementById('fAdicVal').value      = e.adicional_valor     || '';
+    document.getElementById('fDataContrato').value = e.data_contrato       || '';
 
-  updExtQtd(); updExtVal();
-  document.getElementById('alertDisp').className    = 'alert';
-  document.getElementById('alertDisp').textContent  = '';
-  document.getElementById('calcSug').className      = 'calculo-sugestao';
+    updExtQtd(); updExtVal();
+    document.getElementById('alertDisp').className   = 'alert';
+    document.getElementById('alertDisp').textContent = '';
+    document.getElementById('calcSug').className     = 'calculo-sugestao';
+    document.getElementById('calcSug').textContent   = '';
 
-  // Título do modal muda para "Editar Evento"
-  document.getElementById('shFormTitle').textContent = 'Editar Evento';
-  document.getElementById('btnSalvar').innerHTML     = '💾 Salvar Alterações';
+    document.getElementById('shFormTitle').textContent = 'Editar Evento';
+    document.getElementById('btnSalvar').innerHTML     = '💾 Salvar Alterações';
 
-  abrirOverlay('ovForm');
+    // Fechar detalhe e abrir form com pequeno delay
+    fechar('ovDet');
+    setTimeout(() => abrirOverlay('ovForm'), 80);
+
+  } catch(err) {
+    toast('Erro ao abrir edição: ' + err.message);
+    console.error(err);
+  }
 }
 
 function abrirForm() {
