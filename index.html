@@ -773,6 +773,19 @@ header {
 .price-input:focus { outline: none; border-color: var(--primary); }
 .prices-box { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; padding: 0.5rem 0.85rem; margin-bottom: 0.9rem; }
 
+/* Seletor de pacotes com checkboxes */
+.pac-sel-list { background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 0.9rem; }
+.pac-sel-item { border-bottom: 1px solid var(--border); }
+.pac-sel-item:last-child { border-bottom: none; }
+.pac-sel-header { display: flex; align-items: center; justify-content: space-between; padding: 0.7rem 0.85rem; gap: 0.75rem; }
+.pac-sel-check { display: flex; align-items: center; gap: 0.6rem; flex: 1; cursor: pointer; }
+.pac-sel-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; }
+.pac-sel-name { font-size: 0.88rem; font-weight: 600; line-height: 1.1; }
+.pac-sel-desc { font-size: 0.72rem; font-weight: 400; color: var(--muted); display: block; margin-top: 0.15rem; }
+.pac-sel-price { display: flex; align-items: center; gap: 0.3rem; }
+.pac-sel-price .price-input { width: 76px; }
+.pac-sel-price label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+
 /* ============================================================
    SCROLLBAR (webkit)
    ============================================================ */
@@ -1131,51 +1144,62 @@ header {
       </div>
 
       <div class="form-sec">
-        <div class="form-sec-label">Versão do Orçamento</div>
-        <div class="versao-toggle">
-          <button class="versao-btn sel" id="vBtnCompleta" onclick="selVersao('completa')">
-            📋 Completa<br><small style="font-weight:400;font-size:0.7rem">3 opções de preço</small>
-          </button>
-          <button class="versao-btn" id="vBtnPacote" onclick="selVersao('pacote')">
-            🎯 Por Pacote<br><small style="font-weight:400;font-size:0.7rem">1 pacote do site</small>
-          </button>
-        </div>
-      </div>
-
-      <!-- Versão completa: 3 preços -->
-      <div id="secCompleta">
-        <div class="form-sec">
-          <div class="form-sec-label">Valores por Pessoa</div>
-          <div class="prices-box">
-            <div class="price-row">
-              <span class="price-label">Clássico — sem bebidas</span>
-              <input type="number" class="price-input" id="fP1" value="75" inputmode="decimal" step="0.01">
+        <div class="form-sec-label">Pacotes e Valores por Pessoa</div>
+        <div class="pac-sel-list">
+          <!-- Clássico -->
+          <div class="pac-sel-item">
+            <div class="pac-sel-header">
+              <label class="pac-sel-check">
+                <input type="checkbox" id="pcClassico" checked>
+                <div>
+                  <div class="pac-sel-name">🥩 Clássico</div>
+                  <span class="pac-sel-desc">sem bebidas</span>
+                </div>
+              </label>
+              <div class="pac-sel-price">
+                <label>R$</label>
+                <input type="number" class="price-input" id="fP1" value="75" inputmode="decimal" step="0.01">
+              </div>
             </div>
-            <div class="price-row">
-              <span class="price-label">Festivo — com refrigerantes</span>
-              <input type="number" class="price-input" id="fP2" value="90" inputmode="decimal" step="0.01">
+          </div>
+          <!-- Festivo -->
+          <div class="pac-sel-item">
+            <div class="pac-sel-header">
+              <label class="pac-sel-check">
+                <input type="checkbox" id="pcFestivo" checked>
+                <div>
+                  <div class="pac-sel-name">🥤 Festivo</div>
+                  <span class="pac-sel-desc">com refrigerantes e sucos</span>
+                </div>
+              </label>
+              <div class="pac-sel-price">
+                <label>R$</label>
+                <input type="number" class="price-input" id="fP2" value="90" inputmode="decimal" step="0.01">
+              </div>
             </div>
-            <div class="price-row" style="border-bottom:none">
-              <span class="price-label">Premium — com bebidas alcoólicas</span>
-              <input type="number" class="price-input" id="fP3" value="115" inputmode="decimal" step="0.01">
+          </div>
+          <!-- Premium -->
+          <div class="pac-sel-item">
+            <div class="pac-sel-header">
+              <label class="pac-sel-check">
+                <input type="checkbox" id="pcPremium" checked onchange="toggleCerveja()">
+                <div>
+                  <div class="pac-sel-name">🍺 Premium</div>
+                  <span class="pac-sel-desc">com bebidas alcoólicas</span>
+                </div>
+              </label>
+              <div class="pac-sel-price">
+                <label>R$</label>
+                <input type="number" class="price-input" id="fP3" value="115" inputmode="decimal" step="0.01">
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Versão por pacote: escolher 1 -->
-      <div id="secPacote" style="display:none">
-        <div class="form-sec">
-          <div class="form-sec-label">Pacote</div>
-          <div class="pac-radio">
-            <button class="pac-btn sel" id="pacClassico" onclick="selPacote('classico', this)">🥩<br>Clássico</button>
-            <button class="pac-btn"    id="pacFestivo"  onclick="selPacote('festivo',  this)">🥤<br>Festivo</button>
-            <button class="pac-btn"    id="pacPremium"  onclick="selPacote('premium',  this)">🍺<br>Premium</button>
-          </div>
-          <div class="form-group">
-            <label>Valor por Pessoa (R$)</label>
-            <input type="number" id="fPacVal" value="75" inputmode="decimal" step="0.01">
-          </div>
+        <!-- Marca da cerveja — só aparece com Premium marcado -->
+        <div id="secCerveja" class="form-group">
+          <label>Marca da Cerveja (Premium)</label>
+          <input type="text" id="fCerveja" placeholder="Ex: Heineken, Budweiser, Stella Artois...">
         </div>
       </div>
 
@@ -2127,17 +2151,15 @@ function abrirOrc() {
   document.getElementById('fOrcDataEvento').value = '';
   document.getElementById('fOrcValor').value = '';
   buildChecklists();
-  versaoOrc = 'completa'; pacoteOrc = 'classico';
-  document.getElementById('vBtnCompleta').className = 'versao-btn sel';
-  document.getElementById('vBtnPacote').className   = 'versao-btn';
-  document.getElementById('secCompleta').style.display = 'block';
-  document.getElementById('secPacote').style.display   = 'none';
+  // Reset pacotes
+  document.getElementById('pcClassico').checked = true;
+  document.getElementById('pcFestivo').checked  = true;
+  document.getElementById('pcPremium').checked  = true;
   document.getElementById('fP1').value = PRECO_DEFAULT.c1;
   document.getElementById('fP2').value = PRECO_DEFAULT.c2;
   document.getElementById('fP3').value = PRECO_DEFAULT.c3;
-  document.getElementById('fPacVal').value = PAC_PRECO.classico;
-  ['pacClassico','pacFestivo','pacPremium'].forEach((id,i) =>
-    document.getElementById(id).className = 'pac-btn' + (i===0?' sel':''));
+  document.getElementById('fCerveja').value = '';
+  document.getElementById('secCerveja').style.display = 'block';
   switchTabOrc('mo');
   abrirOverlay('ovOrc');
 }
@@ -2161,19 +2183,9 @@ function selCtBuf(n) {
   document.getElementById('ctBufSaymon').className = 'ct-btn'+(n==='Saymon'?' sel s':'');
 }
 
-function selVersao(v) {
-  versaoOrc = v;
-  document.getElementById('vBtnCompleta').className = 'versao-btn'+(v==='completa'?' sel':'');
-  document.getElementById('vBtnPacote').className   = 'versao-btn'+(v==='pacote'  ?' sel':'');
-  document.getElementById('secCompleta').style.display = v==='completa'?'block':'none';
-  document.getElementById('secPacote').style.display   = v==='pacote'  ?'block':'none';
-}
-
-function selPacote(p, btn) {
-  pacoteOrc = p;
-  document.querySelectorAll('.pac-btn').forEach(b => b.className='pac-btn');
-  btn.className = 'pac-btn sel';
-  document.getElementById('fPacVal').value = PAC_PRECO[p];
+function toggleCerveja() {
+  const show = document.getElementById('pcPremium').checked;
+  document.getElementById('secCerveja').style.display = show ? 'block' : 'none';
 }
 
 function buildChecklists() {
@@ -2366,31 +2378,35 @@ function gerarOrcBuffet() {
   const mL=12, mR=198, cW=186;
   let cy;
 
+  /* Coletar pacotes selecionados */
+  const usaClassico = document.getElementById('pcClassico').checked;
+  const usaFestivo  = document.getElementById('pcFestivo').checked;
+  const usaPremium  = document.getElementById('pcPremium').checked;
+  const cerveja     = document.getElementById('fCerveja').value.trim() || 'Skol ou Antártica (outras marcas a combinar com acréscimo no valor)';
+
+  if (!usaClassico && !usaFestivo && !usaPremium) {
+    return toast('Selecione pelo menos um pacote');
+  }
+
+  let p1 = parseFloat(document.getElementById('fP1').value) || 75;
+  let p2 = parseFloat(document.getElementById('fP2').value) || 90;
+  let p3 = parseFloat(document.getElementById('fP3').value) || 115;
+
+  /* Textos dinâmicos por pacote */
+  const textoClassico = `Individual sem bebidas R$ ${moeda(p1)} (${valExtenso(p1)});`;
+  const textoFestivo  = `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores) e água mineral sem gás R$ ${moeda(p2)} (${valExtenso(p2)});`;
+  const textoPremium  = `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores), água mineral sem gás, ${cerveja} e caipirosca com vodka tridestilada (limão, abacaxi e maracujá) R$ ${moeda(p3)} (${valExtenso(p3)}).`;
+
+  const valorTextos = [];
+  if (usaClassico) valorTextos.push(textoClassico);
+  if (usaFestivo)  valorTextos.push(textoFestivo);
+  if (usaPremium)  valorTextos.push(textoPremium);
+
   const CT_BUF = {
     Mayron: { pixLinha1:'PIX', pixLinha2:'mayronnataniel6875@gmail.com', pixLinha3:'Mayron Nataniel da Rosa', fecho:'Saymon/Mayron' },
     Saymon: { pixLinha1:'PIX', pixLinha2:'CPF: 047.329.921-61',         pixLinha3:'Saymon Luciano da Rosa',  fecho:'Saymon/Mayron' }
   };
   const ct = CT_BUF[ctBufSel];
-
-  /* Preços */
-  let p1 = parseFloat(document.getElementById('fP1').value) || 75;
-  let p2 = parseFloat(document.getElementById('fP2').value) || 90;
-  let p3 = parseFloat(document.getElementById('fP3').value) || 115;
-  const pacVal = parseFloat(document.getElementById('fPacVal').value) || 75;
-
-  /* Textos dos valores conforme versão */
-  const valorTextos = {
-    completa: [
-      `Individual sem bebidas R$ ${moeda(p1)} (${valExtenso(p1)});`,
-      `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores) e água mineral sem gás R$ ${moeda(p2)} (${valExtenso(p2)});`,
-      `Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores), água mineral sem gás, cerveja Skol ou antártica (outras marcas a combinar com acréscimo no valor) e caipirosca com vodka tridestilada (limão, abacaxi e maracujá) R$ ${moeda(p3)} (${valExtenso(p3)}).`
-    ],
-    pacote: {
-      classico: `Pacote Clássico — Individual sem bebidas R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`,
-      festivo:  `Pacote Festivo — Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores) e água mineral sem gás R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`,
-      premium:  `Pacote Premium — Individual com refrigerantes coca-cola, fanta laranja e guaraná (normal e zero), sucos em caixa (três sabores), água mineral sem gás, cerveja Skol ou antártica (outras marcas a combinar com acréscimo no valor) e caipirosca com vodka tridestilada (limão, abacaxi e maracujá) R$ ${moeda(pacVal)} (${valExtenso(pacVal)}) por pessoa.`
-    }
-  };
 
   /* ---- Helpers ---- */
   function fillBG() {
@@ -2501,7 +2517,7 @@ function gerarOrcBuffet() {
   /* VALORES */
   wp('Valores:', { sz:11, style:'bold', after:2 });
 
-  /* Bullet com preço em laranja — renderiza segmentos de cor diferente por linha */
+  /* Bullet com preço em laranja */
   function bulletValor(text) {
     const x = mL + 5;
     const w = mR - x - 1;
@@ -2512,7 +2528,6 @@ function gerarOrcBuffet() {
       if (cy + lhF(8.5) > PH - 12) { startPage(); }
       if (li === 0) { doc.setFillColor(...WHITE); doc.circle(x-2.5, cy-2, 0.5,'F'); }
 
-      /* Dividir linha em segmentos: texto normal + R$XX,XX em AMBER */
       const priceRe = /R\$\s*[\d.,]+/g;
       const segs = []; let last = 0, pm;
       while ((pm = priceRe.exec(line)) !== null) {
@@ -2534,11 +2549,7 @@ function gerarOrcBuffet() {
     cy += 1.5;
   }
 
-  if (versaoOrc === 'completa') {
-    valorTextos.completa.forEach(txt => bulletValor(txt));
-  } else {
-    bulletValor(valorTextos.pacote[pacoteOrc]);
-  }
+  valorTextos.forEach(txt => bulletValor(txt));
   cy += 2;
 
   /* Encerramento p1 */
